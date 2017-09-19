@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Navigation simulator</title>
+    <script src="simulatenavigate.js"></script>
+  </head>
+
+  <body>
+    <h1>Navigation simulator</h1>
+    <form>
+      <p>URL: <input type="text" id="url" size="80"></p>
+      <p>Target:
+        <input type="radio" id="targetSelf" name="target" value="self" checked/>
+        Self
+        <input type="radio" id="targetBlank" name="target" value="blank"/>
+        Blank
+        <input type="radio" id="targetNoLaunch" name="target" value="nolaunch"/>
+        Non-launch</p>
+      <p><input type="submit" value="Go" id="go"></p>
+    </form>
+  </body>
+</html>
