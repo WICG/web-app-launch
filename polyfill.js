@@ -1,5 +1,38 @@
 // To be included in the Service Worker.
 
+class LaunchEvent extends ExtendableEvent {
+  constructor(type, init) {
+    super(type, init);
+    this.url = init ? init.url || null : null;
+    this.clientId = init ? init.clientId || null : null;
+    this._handlePending = null;
+    this._defaultBehavior = null;
+  }
+
+  handleLaunch(promise) {
+    // Wait until the promise resolves before applying the default.
+    this._handlePending = promise;
+
+    promise.then(() => {
+      // Promise succeeded. Assume the launch event handler handled it, and do
+      // not apply the default behavior.
+      this._handlePending = null;
+    }).catch(() => {
+      // Promise failed. Apply the default behavior.
+      // NOTE: If we do not want to do this (i.e., we don't care whether it
+      // succeeds or fails), we can just use preventDefault instead of
+      // handleLaunch taking a promise.
+      this._handlePending = null;
+      if (this._defaultBehavior)
+        defaultBehavior();
+    });
+  }
+
+  _setDefaultBehavior(defaultBehavior) {
+    this._defaultBehavior = defaultBehavior;
+  }
+}
+
 // Listen for a message from simulatenavigate.html.
 self.addEventListener('message', async event => {
   if (event.data.tag !== 'polyfill_simulatenavigate')
@@ -18,10 +51,28 @@ self.addEventListener('message', async event => {
     return;
   }
 
-  // For now, just open a new window at that URL.
-  // TODO: Polyfill the 'launch' event.
-  if (target === 'self')
-    event.source.navigate(url);
-  else
-    clients.openWindow(url);
+  // Create and fire a LaunchEvent.
+  // If target is self, pass the client ID into the launch event, so it can
+  // identify the sending window. If target is blank, this navigation is not
+  // tied to any particular context.
+  const clientId = target === 'self' ? event.source.id : null;
+  const launchEvent = new LaunchEvent('launch', {url, clientId});
+  self.dispatchEvent(launchEvent);
+
+  defaultBehavior = () => {
+    if (target === 'self')
+      event.source.navigate(url);
+    else
+      clients.openWindow(url);
+  }
+
+  if (launchEvent._handlePending === null) {
+    // Launch handler did not queue a custom handler. Immediately apply the
+    // default behavior.
+    defaultBehavior();
+  } else {
+    // Tell the LaunchEvent to apply the default behavior after the handler
+    // completes, if it did not succeed.
+    launchEvent._setDefaultBehavior(defaultBehavior);
+  }
 });
