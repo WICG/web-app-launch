@@ -5,10 +5,17 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>My Site</title>
+    <title>Service Worker Launch Demo</title>
     <script src="index.js"></script>
   </head>
 
   <body>
+    <h1>Service Worker Launch Demo</h1>
+    <p>This is a demo site for the Service Worker "launch" event polyfill.</p>
+    <p>Because "launch" is not implemented in the browser, you need to use the
+       <a href="simulatenavigate.html">Navigation Simulator</a>. Think of that
+       as a test UI for generating incoming navigations into your website.</p>
+    <p>This page acts as the "main page" of the site; it uses the "launch" event
+       to steal any navigations to the "/compose" URL.</p>
   </body>
 </html>
