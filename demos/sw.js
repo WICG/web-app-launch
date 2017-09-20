@@ -12,8 +12,15 @@ self.addEventListener('launch', event => {
     return;
 
   event.handleLaunch((async () => {
-    // Get an existing client.
-    const client = (await clients.matchAll())[0];
+    // Get an existing client at the main page URL.
+    const allClients = await clients.matchAll();
+    let client;
+    for (const c of allClients) {
+      if (new URL(c.url).pathname === '/') {
+        client = c;
+        break;
+      }
+    }
 
     if (client) {
       console.log('[SW] Focusing existing page:', client.id);
