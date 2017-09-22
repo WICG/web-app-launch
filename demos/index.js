@@ -4,4 +4,11 @@
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
+
+  navigator.serviceWorker.addEventListener('message', event => {
+    const logsDiv = document.querySelector('#logs');
+    const p = document.createElement('p');
+    p.appendChild(document.createTextNode('Got message: ' + event.data));
+    logsDiv.appendChild(p);
+  });
 }
