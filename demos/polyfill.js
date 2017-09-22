@@ -13,6 +13,9 @@ class LaunchEvent extends ExtendableEvent {
   }
 
   handleLaunch(promise) {
+    if (this._handlePending !== null)
+      throw new InvalidStateError('handleLaunch has already been called');
+
     // Extend the lifetime of the event until the promise completes.
     // This is not actually allowed on a script-constructed ExtendableEvent.
     //this.waitUntil(promise);
@@ -60,16 +63,11 @@ self.addEventListener('message', async event => {
     // default behavior.
     defaultBehavior();
   } else {
-    launchEvent._handlePending.then(() => {
-      // Promise succeeded. Assume the launch event handler handled it, and do
-      // not apply the default behavior.
-      launchEvent._handlePending = null;
-    }).catch(() => {
+    launchEvent._handlePending.catch(() => {
       // Promise failed. Apply the default behavior.
       // NOTE: If we do not want to do this (i.e., we don't care whether it
       // succeeds or fails), we can just use preventDefault instead of
       // handleLaunch taking a promise.
-      launchEvent._handlePending = null;
       defaultBehavior();
     });
   }
