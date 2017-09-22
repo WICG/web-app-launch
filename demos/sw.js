@@ -27,8 +27,9 @@ self.addEventListener('launch', event => {
       client.focus();
       client.postMessage('compose');
     } else {
-      console.log('[SW] Opening new page at', event.url);
-      clients.openWindow(event.url);
+      console.log('[SW] Resuming normal navigation to ', event.url);
+      // Any throw causes the normal behaviour to resume.
+      throw new AbortError('Resuming normal navigation');
     }
   })());
 });
