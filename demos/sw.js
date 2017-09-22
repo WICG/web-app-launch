@@ -29,7 +29,7 @@ self.addEventListener('launch', event => {
     } else {
       console.log('[SW] Resuming normal navigation to ', event.url);
       // Any throw causes the normal behaviour to resume.
-      throw new AbortError('Resuming normal navigation');
+      throw new Error('Resuming normal navigation');
     }
   })());
 });
