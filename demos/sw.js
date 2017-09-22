@@ -22,14 +22,14 @@ self.addEventListener('launch', event => {
       }
     }
 
-    if (client) {
-      console.log('[SW] Focusing existing page:', client.id);
-      client.focus();
-      client.postMessage('compose');
-    } else {
+    if (!client) {
       console.log('[SW] Resuming normal navigation to ', event.url);
       // Any throw causes the normal behaviour to resume.
       throw new Error('Resuming normal navigation');
     }
+
+    console.log('[SW] Focusing existing page:', client.id);
+    client.focus();
+    client.postMessage('compose');
   })());
 });
