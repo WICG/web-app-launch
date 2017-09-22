@@ -53,6 +53,7 @@ self.addEventListener('message', async event => {
   self.dispatchEvent(launchEvent);
 
   if (launchEvent.defaultPrevented) {
+    console.log('[Polyfill]: Cancelling default behavior (preventDefault)');
     // Do not apply the default behaviour, regardless of any pending promise.
     return;
   }
@@ -65,18 +66,27 @@ self.addEventListener('message', async event => {
   }
 
   if (launchEvent._handlePending === null) {
+    console.log('[Polyfill]: Proceeding with default behavior '
+                + '(no preventDefault / handleLaunch)');
     // Launch handler did not queue a custom handler. Immediately apply the
     // default behavior.
     defaultBehavior();
-  } else {
-    try {
-      await launchEvent._handlePending;
-    } catch (e) {
-      // Promise failed. Apply the default behavior.
-      // NOTE: If we do not want to do this (i.e., we don't care whether it
-      // succeeds or fails), we can just use preventDefault instead of
-      // handleLaunch taking a promise.
-      defaultBehavior();
-    }
+    return;
   }
+
+  try {
+    await launchEvent._handlePending;
+  } catch (e) {
+    // Promise failed. Apply the default behavior.
+    // NOTE: If we do not want to do this (i.e., we don't care whether it
+    // succeeds or fails), we can just use preventDefault instead of
+    // handleLaunch taking a promise.
+    console.log('[Polyfill]: Proceeding with default behavior '
+                + '(handleLaunch rejected)');
+    defaultBehavior();
+    return;
+  }
+
+  console.log('[Polyfill]: Cancelling default behavior '
+              + '(handleLaunch fulfilled)');
 });
