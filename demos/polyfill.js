@@ -48,8 +48,14 @@ self.addEventListener('message', async event => {
   // identify the sending window. If target is blank, this navigation is not
   // tied to any particular context.
   const clientId = target === 'self' ? event.source.id : null;
-  const launchEvent = new LaunchEvent('launch', {url, clientId});
+  const launchEvent =
+      new LaunchEvent('launch', {url, clientId, cancelable: true});
   self.dispatchEvent(launchEvent);
+
+  if (launchEvent.defaultPrevented) {
+    // Do not apply the default behaviour, regardless of any pending promise.
+    return;
+  }
 
   defaultBehavior = () => {
     if (target === 'self')
