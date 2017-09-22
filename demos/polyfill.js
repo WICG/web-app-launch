@@ -63,12 +63,14 @@ self.addEventListener('message', async event => {
     // default behavior.
     defaultBehavior();
   } else {
-    launchEvent._handlePending.catch(() => {
+    try {
+      await launchEvent._handlePending;
+    } catch (e) {
       // Promise failed. Apply the default behavior.
       // NOTE: If we do not want to do this (i.e., we don't care whether it
       // succeeds or fails), we can just use preventDefault instead of
       // handleLaunch taking a promise.
       defaultBehavior();
-    });
+    }
   }
 });
