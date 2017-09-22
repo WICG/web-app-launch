@@ -14,6 +14,10 @@ class LaunchEvent extends ExtendableEvent {
   }
 
   handleLaunch(promise) {
+    // Extend the lifetime of the event until the promise completes.
+    // This is not actually allowed on a script-constructed ExtendableEvent.
+    //this.waitUntil(promise);
+
     // Wait until the promise resolves before applying the default.
     this._handlePending = promise;
 
