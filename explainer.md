@@ -41,6 +41,9 @@ event *event*:
   Client to focus.
 * Alternatively, if we don't need to wait for a promise, we could just use
   `preventDefault` and not have `handleLaunch` at all.
+* Alternatively, it might be bad to just do the default behavior on rejection
+  (since an async function rejects on any error). Instead, make the promise
+  return a Boolean that indicates whether to cancel or default.
 * I would like to make sure that notifications can be shown from a `launch`
   event handler. This satisfies use cases like a "save for later" tool that has
   a share target. When the share target is chosen, it just shows a notification
