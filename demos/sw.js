@@ -4,10 +4,12 @@
 
 importScripts('polyfill.js')
 
+const kMainURLPath = new URL(self.registration.scope).pathname;
+const kComposeURL = new URL('compose', self.registration.scope).href;
+
 self.addEventListener('launch', event => {
   console.log('[SW]: launch:', event);
 
-  const kComposeURL = new URL('compose', self.registration.scope).href;
   if (event.url !== kComposeURL)
     return;
 
@@ -16,7 +18,7 @@ self.addEventListener('launch', event => {
     const allClients = await clients.matchAll();
     let client;
     for (const c of allClients) {
-      if (new URL(c.url).pathname === '/') {
+      if (new URL(c.url).pathname === kMainURLPath) {
         client = c;
         break;
       }
