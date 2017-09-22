@@ -10,7 +10,6 @@ class LaunchEvent extends ExtendableEvent {
     this.url = init ? init.url || null : null;
     this.clientId = init ? init.clientId || null : null;
     this._handlePending = null;
-    this._defaultBehavior = null;
   }
 
   handleLaunch(promise) {
@@ -20,24 +19,6 @@ class LaunchEvent extends ExtendableEvent {
 
     // Wait until the promise resolves before applying the default.
     this._handlePending = promise;
-
-    promise.then(() => {
-      // Promise succeeded. Assume the launch event handler handled it, and do
-      // not apply the default behavior.
-      this._handlePending = null;
-    }).catch(() => {
-      // Promise failed. Apply the default behavior.
-      // NOTE: If we do not want to do this (i.e., we don't care whether it
-      // succeeds or fails), we can just use preventDefault instead of
-      // handleLaunch taking a promise.
-      this._handlePending = null;
-      if (this._defaultBehavior)
-        defaultBehavior();
-    });
-  }
-
-  _setDefaultBehavior(defaultBehavior) {
-    this._defaultBehavior = defaultBehavior;
   }
 }
 
@@ -79,8 +60,17 @@ self.addEventListener('message', async event => {
     // default behavior.
     defaultBehavior();
   } else {
-    // Tell the LaunchEvent to apply the default behavior after the handler
-    // completes, if it did not succeed.
-    launchEvent._setDefaultBehavior(defaultBehavior);
+    launchEvent._handlePending.then(() => {
+      // Promise succeeded. Assume the launch event handler handled it, and do
+      // not apply the default behavior.
+      launchEvent._handlePending = null;
+    }).catch(() => {
+      // Promise failed. Apply the default behavior.
+      // NOTE: If we do not want to do this (i.e., we don't care whether it
+      // succeeds or fails), we can just use preventDefault instead of
+      // handleLaunch taking a promise.
+      launchEvent._handlePending = null;
+      defaultBehavior();
+    });
   }
 });
