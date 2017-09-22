@@ -17,6 +17,11 @@
        as a test UI for generating incoming navigations into your website.</p>
     <p>This page acts as the "main page" of the site; it uses the "launch" event
        to steal any navigations to the "/compose" URL.</p>
+    <p>Note: The demo is unable to focus an existing tab or open a new one (due
+       to user gesture restriction). Look for error messages in the console to
+       imagine what is "supposed" to happen (or patch Chromium with this <a
+          href="https://crrev.com/c/678697">hack to remove the gesture
+       check</a>).</p>
     <div id="logs"></div>
   </body>
 </html>
