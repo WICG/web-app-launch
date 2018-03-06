@@ -8,3 +8,4 @@ This site details a proposal to add a "`launch`" event to Web service workers.
 
 * [Explainer](explainer.md)
 * [Demo site with polyfill](demos)
+  ([live demo](https://wicg.github.io/sw-launch/demos/))
