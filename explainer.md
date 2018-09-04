@@ -190,6 +190,13 @@ active service worker:
 6. If [[*handlePending*]] is rejected, proceed with the normal navigation
    algorithm. (If it is fulfilled, do not continue with the navigation.)
 
+The user agent **MAY** go through the `launch` flow after going through the
+normal navigation behaviour. For example, the user agent might display a prompt
+asking if the user would like to use the `launch` flow for this launch and
+future launches. In this case, the tab navigates back and the launch event is
+issued. Note that the navigation might involve a POST request, in which case
+the POST may be handled twice.
+
 # Security and privacy considerations
 
 * The user agent must only fire a `launch` event for navigations to URLs inside
