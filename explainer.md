@@ -27,7 +27,7 @@ Example Service Worker code to redirect navigations into an existing window:
         if (allClients.length === 0)
             return;
         const client = allClients[0];
-        client.postMessage(event.url);
+        client.postMessage(event.request.url);
         client.focus();
         event.preventDefault();
       }());
@@ -113,7 +113,7 @@ code](demos/polyfill.js), which roughly implements this logic.
 ## LaunchEvent
 
     interface LaunchEvent : ExtendableEvent {
-      readonly attribute USVString url;
+      readonly attribute Request request;
       readonly attribute DOMString? clientId;
     }
 
@@ -149,6 +149,8 @@ code](demos/polyfill.js), which roughly implements this logic.
   is asynchronous, you should be able to inspect the existing clients in a
   promise before deciding whether to override the navigation. Thus the event
   needs to be an `ExtendableEvent`.
+* LaunchEvent could have a url member instead of a request member. However, the
+  handler would then have no access to the form data of POST requests.
 
 ## Firing the `launch` event
 
