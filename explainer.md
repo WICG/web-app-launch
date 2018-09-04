@@ -3,7 +3,8 @@
 Author: Matt Giuca &lt;<mgiuca@chromium.org>&gt;
 Author: Eric Willigers &lt;<ericwilligers@chromium.org>&gt;
 
-Date: 2018-09-04
+Created: 2017-09-22
+Updated: 2018-09-04
 
 This explainer proposes a new API to Service Workers to prevent certain incoming
 navigations from completing and handle them with custom logic. This allows sites
@@ -26,6 +27,7 @@ Example Service Worker code to redirect navigations into an existing window:
         // If there isn't one available, the default behaviour = open a window.
         if (allClients.length === 0)
             return;
+
         const client = allClients[0];
         client.postMessage(event.request.url);
         client.focus();
@@ -118,12 +120,13 @@ code](demos/polyfill.js), which roughly implements this logic.
     }
 
 * `waitUntil` delays the user agent from launching and waits for the promise.
-  If the promise rejects, the default launch behaviour resumes.
 * `preventDefault` is analogous to
   [`FetchEvent`](https://www.w3.org/TR/service-workers-1/#fetch-event-section)'s
   `respondWith` method. If it is called (during the `launch` event handler), it
   stops the user agent from launching. Nothing further happens (the user agent
   assumes the app has handled it).
+  If any promise passed to `waitUntil` rejects, stop the launch, as if
+  `preventDefault` was called.
 * The `launch` event is considered to be "allowed to show a popup", so that
   `Clients.openWindow` and `Client.focus` can be used.
 
@@ -131,7 +134,10 @@ code](demos/polyfill.js), which roughly implements this logic.
 
 * We considered adding a `handleLaunch` method that accepts a promise like
   `waitUntil`. `handleLaunch` would have called `preventDefault` unless the
-  promise rejected.
+  promise rejected. We originally thought web apps might be able to
+  dynamically choose whether or not user would be presented with the option of
+  launching the web app in its own window. The current proposal provides more
+  predictability for the user.
 * `handleLaunch` could have been given a promise that resolves to a Client or Client
   ID, which automatically becomes focused (so `Client.focus` doesn't have to be
   called). This could mean that we never need a user gesture token, because you
@@ -191,11 +197,15 @@ active service worker:
    algorithm. (If it is fulfilled, do not continue with the navigation.)
 
 The user agent **MAY** go through the `launch` flow after going through the
-normal navigation behaviour. For example, the user agent might display a prompt
-asking if the user would like to use the `launch` flow for this launch and
-future launches. In this case, the tab navigates back and the launch event is
-issued. Note that the navigation might involve a POST request, in which case
-the POST may be handled twice.
+normal navigation behaviour. For example, the user agent might be displaying
+a choice asking asking if the user would like to use the `launch` flow for this
+launch and future launches. The user agent might prefer to immediately display
+the page being navigated to, instead of waiting for the user to make a choice.
+Thus the choice might be presented as a popup that the user can ignore. If
+the user requests the `launch` flow, then the event fires and the navigation
+occurs in the window that is in focus when the event completes. Note that the
+navigation might involve a POST request, in which case the POST may be handled
+twice.
 
 # Security and privacy considerations
 
