@@ -1,8 +1,9 @@
 # Overview
 
 Author: Matt Giuca &lt;<mgiuca@chromium.org>&gt;
+Author: Eric Willigers &lt;<ericwilligers@chromium.org>&gt;
 
-Date: 2017-09-22
+Date: 2018-09-04
 
 This explainer proposes a new API to Service Workers to prevent certain incoming
 navigations from completing and handle them with custom logic. This allows sites
@@ -20,15 +21,16 @@ link.
 Example Service Worker code to redirect navigations into an existing window:
 
     self.addEventListener('launch', event => {
-      event.handleLaunch((async () => {
-        const client = (await clients.matchAll())[0];
-        if (!client)
-          throw new Error('No existing client');  // Resume normal behavior.
-
-        // Send message to, and then focus, the existing page.
-        client.postMessage({url: event.url});
+      event.waitUntil(async () => {
+        const allClients = await clients.matchAll();
+        // If there isn't one available, the default behaviour = open a window.
+        if (allClients.length === 0)
+            return;
+        const client = allClients[0];
+        client.postMessage(event.url);
         client.focus();
-      })());
+        event.preventDefault();
+      }());
     });
 
 The event is named "launch" (as opposed to "navigate"), as suggested by Jake
@@ -113,32 +115,24 @@ code](demos/polyfill.js), which roughly implements this logic.
     interface LaunchEvent : ExtendableEvent {
       readonly attribute USVString url;
       readonly attribute DOMString? clientId;
-
-      void handleLaunch(Promise<any> promise);
     }
 
-* `handleLaunch` is analogous to
+* `waitUntil` delays the user agent from launching and waits for the promise.
+  If the promise rejects, the default launch behaviour resumes.
+* `preventDefault` is analogous to
   [`FetchEvent`](https://www.w3.org/TR/service-workers-1/#fetch-event-section)'s
   `respondWith` method. If it is called (during the `launch` event handler), it
-  stops the user agent from launching and waits for the promise. If the promise
-  fulfills, nothing further happens (the user agent assumes the app has handled
-  it). If the promise rejects, the default launch behaviour resumes.
-* The `launch` event handler can also just call `preventDefault` to accomplish
-  the same thing (but this is more limited in that you can't decide
-  asynchronously whether to consume the event or not).
+  stops the user agent from launching. Nothing further happens (the user agent
+  assumes the app has handled it).
 * The `launch` event is considered to be "allowed to show a popup", so that
   `Clients.openWindow` and `Client.focus` can be used.
 
-Spec-ish text for `handleLaunch` algorithm with promise *promise* applied to
-event *event*:
-
-1. If internal slot [[*handlePending*]] is not null, throw `InvalidStateError`.
-2. Invoke *event*'s `waitUntil` with *promise*.
-3. Set internal slot [[*handlePending*]] to *promise*.
-
 ### Alternative design ideas and notes
 
-* `handleLaunch` could be given a promise that resolves to a Client or Client
+* We considered adding a `handleLaunch` method that accepts a promise like
+  `waitUntil`. `handleLaunch` would have called `preventDefault` unless the
+  promise rejected.
+* `handleLaunch` could have been given a promise that resolves to a Client or Client
   ID, which automatically becomes focused (so `Client.focus` doesn't have to be
   called). This could mean that we never need a user gesture token, because you
   just reject if you want to open a window with the URL, or resolve with a
@@ -153,7 +147,8 @@ event *event*:
 * It isn't sufficient to just cancel with `preventDefault`, because that
   requires you to make the cancel decision synchronously. Since the Clients API
   is asynchronous, you should be able to inspect the existing clients in a
-  promise before deciding whether to override the navigation.
+  promise before deciding whether to override the navigation. Thus the event
+  needs to be an `ExtendableEvent`.
 
 ## Firing the `launch` event
 
