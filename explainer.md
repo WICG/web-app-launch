@@ -21,19 +21,21 @@ link.
 
 Example Service Worker code to redirect navigations into an existing window:
 
-    self.addEventListener('launch', event => {
-      event.waitUntil(async () => {
-        const allClients = await clients.matchAll();
-        // If there isn't one available, the default behaviour = open a window.
-        if (allClients.length === 0)
-            return;
+```js
+self.addEventListener('launch', event => {
+  event.waitUntil(async () => {
+    const allClients = await clients.matchAll();
+    // If there isn't one available, the default behaviour = open a window.
+    if (allClients.length === 0)
+        return;
 
-        const client = allClients[0];
-        client.postMessage(event.request.url);
-        client.focus();
-        event.preventDefault();
-      }());
-    });
+    const client = allClients[0];
+    client.postMessage(event.request.url);
+    client.focus();
+    event.preventDefault();
+  }());
+});
+```
 
 The event is named "launch" (as opposed to "navigate"), as suggested by Jake
 Archibald, to evoke the idea that it only takes place when the website is
@@ -114,10 +116,12 @@ code](demos/polyfill.js), which roughly implements this logic.
 
 ## LaunchEvent
 
-    interface LaunchEvent : ExtendableEvent {
-      readonly attribute Request request;
-      readonly attribute DOMString? clientId;
-    }
+```idl
+interface LaunchEvent : ExtendableEvent {
+  readonly attribute Request request;
+  readonly attribute DOMString? clientId;
+}
+```
 
 * `waitUntil` delays the user agent from launching and waits for the promise.
 * `preventDefault` is analogous to
