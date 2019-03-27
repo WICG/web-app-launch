@@ -22,7 +22,7 @@ self.addEventListener('launch', event => {
     if (allClients.length === 0) {
       clients.openWindow(event.request.url);
       event.preventDefault();
-      return
+      return;
     }
 
     const client = allClients[0];
@@ -66,14 +66,14 @@ This explainer proposes a new API for Service Workers to prevent certain incomin
 
 Crucially, this only allows *certain* navigations to be intercepted. The user is still in control of the experience, so if they really want to, they can say "Open in new tab" and the app will not be allowed to prevent the page from opening. This is only used to prevent basic navigations, such as left-clicking a link.
 
-Further, not every navigation to a web app would trigger a `launch` event, only those that indicate it is being launched like an app. Typically only navigations from outside the scope of the app into its scope would trigger a `launch` event.
+Further, not every navigation to a web app would trigger a `launch` event, only those that indicate it is being launched like an app. Typically, only events external to the app could trigger a `launch` event (e.g. navigations from a website outside of the app's scope into the app, opening a file, sharing a link to the app).
 
 Notice that all the current ways of launching an app described in the [Background](#background) section invoke the app via a navigation:
 1. **OS Shortcuts:** The launch URL in the web app manifest will be navigated to.
 3. **Protocol Handlers:** A URL is registered to be the protocol handler. This will be navigated to and data about the invocation will be passed in URL parameters.
 4. **Web Share Target:** A URL is associated with a share target. This will be navigated to. Share data is passed via GET or POST parameters.
 
-Hence, this proposal gives the same control to a web app over where these types of invocations will happen.
+Hence, this proposal would allow web apps to control their launch surface for all of the above types of invocation.
 
 ### Example
 
@@ -87,7 +87,7 @@ self.addEventListener('launch', event => {
     if (allClients.length === 0) {
       clients.openWindow(event.request.url)
       event.preventDefault();
-      return
+      return;
     }
 
     const client = allClients[0];
@@ -100,7 +100,6 @@ self.addEventListener('launch', event => {
 Notes:
 * `waitUntil` delays the user agent from launching and waits for the promise. This is necessary because inspecting existing client windows happens asynchronously.
 * `preventDefault` is analogous to [`FetchEvent`](https://www.w3.org/TR/service-workers-1/#fetch-event-section)'s `respondWith` method. If it is called (during the `launch` event handler), it stops the user agent from completing the navigation that triggered the `launch`. Nothing further happens (the user agent assumes the app has handled it).
-* If any promise passed to `waitUntil` rejects, stop the launch, as if `preventDefault` was called.
 * The `launch` event is considered to be "allowed to show a popup", so that `Clients.openWindow` and `Client.focus` can be used.
 * If the event handler doesn't call `event.preventDefault()`, continue the original navigation as if the `launch` event wasn't fired.
 
@@ -109,13 +108,10 @@ Notes:
 ```ts
 interface LaunchEvent : ExtendableEvent {
   readonly attribute Request request;
-  readonly attribute DOMString? clientId;
 }
 ```
 Notes:
-* The `Request` that led to the navigation is included. In addition to the URL, this allows sites to inspect things like POST data (e.g. for a Web Share Target) that led to the invocation of the app.
-* The source `clientId` of the navigation is included. 
-* 
+* The `Request` that led to the navigation is included. In addition to the URL, this allows sites to inspect things like POST data (e.g. for a Web Share Target) that led to the invocation of the app. 
 ## Design Questions/Concerns
 
 ### Addressing malicious or poorly written Sites
@@ -130,6 +126,7 @@ User agents can give feedback to users when a site is handling a `launch` event 
 - Show a splash screen indicating the app is launching
 - Show an entry for the app in the taskbar/dock/shelf indicating it's loading
 - Focus a previously opened window in the scope of the app
+- TODO: mitigations for non-installed sites
 
 If the app doesn't show UI after a long delay (e.g. 10 seconds), the user agent could:
 - Kill the `launch` event handler and show an error message indicating the app couldn't launch
@@ -146,7 +143,7 @@ This proposal restricts what would be possible with `launch` events, and could a
 
 ### Whether `launch` events should *only* be triggered by navigations
 
-In the proposal described so far, all `launch` events are triggered by navigations to URLs. However, it's an open question whether this would be a pre-requisite for future `launch` events. The File Handlers API is introducing the ability for web apps to register themselves as handlers for certain file types. When designing this API there is a choice:
+In the proposal described so far, all `launch` events are triggered by navigations to URLs. However, it's an open question whether this would be a pre-requisite for future `launch` events. The [File Handlers API](https://github.com/WICG/file-handling/blob/master/explainer.md) is introducing the ability for web apps to register themselves as handlers for certain file types. When designing this API there is a choice:
 1. Pass file handles to the app via the `launch` event in the service worker
 2. Invent a new way of passing file handles to windows. For example, the browser could launch a URL and pass blob URLs as query parameters, e.g. https://example.com/file_handler?file1=blob://abcdefg&file2=blob://tuvwxyz.
 
@@ -160,12 +157,10 @@ enum LaunchType {
 
 interface LaunchEvent : ExtendableEvent {
   readonly attribute LaunchType type;
-  readonly attribute DOMString? clientId;
 }
 
 interface NavigationLaunchEvent : LaunchEvent {
   readonly attribute Request request;
-  readonly attribute FileSystemFileHandle[] files;
 }
 
 interface FileLaunchEvent : LaunchEvent {
@@ -173,7 +168,7 @@ interface FileLaunchEvent : LaunchEvent {
 }
 ```
 
-Alternatively, rather than specifying a `type` attribute and class hierarchy, different types of event could be fired in different cases, such as `launch-navigation` and `launch-file`.
+Alternatively, rather than specifying a `type` attribute and class hierarchy, different types of event could be fired in different cases, such as `launch-navigation` and `launch-file`, or invocation specific arguments could be optional.
 
 On the other hand, the debate of whether to fire a SW event or to trigger a URL navigation with parameters has come up recently in the Deep Linking API [proposal](https://docs.google.com/document/d/1WzpCnpc1N7WjDJnFmj90-Z5SALI3cSPtNrYuH1EVufg/edit#). In that document, mgiuca@ suggests:
 
@@ -183,7 +178,9 @@ On the other hand, the debate of whether to fire a SW event or to trigger a URL 
 
 `fetch` events provide a response via a `FetchEvent.respondWith` function. In a similar way, `launch` events could be designed to call a `LaunchEvent.launchWith` function with a `Client` which should be focused.
 
-The main benefit to this approach is that it would ensure that developers don't forget to focus a client window. The main issue with this is that it removes the flexibility for doing things besides focusing windows. For example, `launch` events may just want to show a notification. 
+The main benefit to this approach is that it would ensure that developers don't forget to focus a client window. The main issue with this is that it removes the flexibility for doing things besides focusing windows. For example, `launch` events may just want to show a notification.
+
+As an aside, the `notificationclick` event has similar challenges to the `launch` event in that handlers can be written such that nothing happens when a notification is clicked. Whatever solution is decided for `launch` event should also apply to `notificationclick` for consistency.
 
 ## Details
 
@@ -201,7 +198,7 @@ The purpose of this "**MAY**" is to allow the user agent to determine in what si
 
 If the user agent opts to use the `launch` flow, it should do the following instead of the normal navigation algorithm, within the context of *resource*'s active service worker:
 
-1. Create a new `LaunchEvent` *event* with `type` set to `"launch"`, `url` set to *resource* and `clientId` set to the service worker client ID of *browsingContext*. (`clientId` is `null` if this navigation would open a new browsing context.)
+1. Create a new `LaunchEvent` *event* with `type` set to `"launch"`, `url` set to *resource*.
 2. Fire *event* at the service worker global scope. The event listener is **triggered by user activation**.
 3. If *event* is **cancelled**, abort these steps (and do not continue with the navigation).
 4. If *event*'s [[*handlePending*]] slot is null, abort these steps and proceed with the normal navigation algorithm.
@@ -214,7 +211,6 @@ Thus the choice might be presented as a popup that the user can ignore. If the u
 ## Security and privacy considerations
 
 * The user agent must only fire a `launch` event for navigations to URLs inside the service worker's scope, or a service worker could spy on other navigations.
-* By providing the service worker with the client ID of the navigation source, the target site may be able to learn a lot more information about where the user came from than the usual `Referer` header.
 
 ## Appendix
 
