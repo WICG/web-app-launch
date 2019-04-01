@@ -182,6 +182,45 @@ The main benefit to this approach is that it would ensure that developers don't 
 
 As an aside, the `notificationclick` event has similar challenges to the `launch` event in that handlers can be written such that nothing happens when a notification is clicked. Whatever solution is decided for `launch` event should also apply to `notificationclick` for consistency.
 
+### Should apps that aren't installed have launch events fired?
+
+It is unclear whether launch events should be gated on installation. Ultimately this should be up to the user agent, but it would be nice to be able to provide some kind of recommendation. 
+
+Our preference here is that apps which are not installed don't receive launch events, so as to break user expectations of the web as little as possible (installed apps are a new thing). In general, we prefer not to gate APIs on installation, however, there is some precedence for granting more permissions upon installation; PiP and WebShareTarget, for example.
+
+### Potentially Breaking `window.open`
+`window.open` is a synchronous  API, while the nature of launch events requires them to be asynchronous. It is unclear how we will be able to reconcile these two APIs (blocking until the launch event completes doesn't seem super acceptable). This could break popup based authentication flows (and potentially more).
+
+Due to this concern, the initial implementation of launch events will likely ship without `window.open` support, with the intent to revisit it later.
+
+### Login Flows
+Many websites make use of a login service hosted on a origin. This origin could be on the same domain (as in the case of google.com and accounts.google.com) or through an independent OAuth service (like how spotify.com authenticates with facebook.com). These flows are not trivially compatible with launch events, and it will require some care to ensure that we do not break sites.
+
+Three primary cases have been identified for login flows: A separate first party domain, redirecting to a third party, and a third party through a popup window. These cases are discussed in more detail below.
+
+> Disclaimer: These examples are all purely hypothetical, and are used to illustrate potential problems. They have no relationship with the actual behavior of the sites (and cannot, as launch events have not been implemented).
+
+**First Party Authentication via Redirect**
+
+A user navigates to mail.google.com. They are not logged in, so they are redirected to accounts.google.com, to authenticate themselves. If accounts.google.com has a launch event handler (perhaps for an account management PWA), then the site would need to be careful not to open an app window, as this would cause mail.google.com to be opened inside the accounts app window, potentially causing confusion.
+
+This could be *somewhat* alleviated if mail.google.com provided its own launch handler which opened it in an app window, but this is not an ideal solution, as it would require the service worker to be already initialized. It also doesn't seem reasonable to expect every site to register a launch handler to get what is considered 'sane' behavior.
+
+**Third Party Authentication via a Popup**
+
+A user navigates to spotify.com. They are not logged in, so they click the 'Login in with Facebook' button, at which point a popup is triggered, prompting them to log into facebook.com.
+
+Arguably, this case wouldn't require any special handling. The popup could be handled by a launch event or not and the behavior would be functionally identical. A new app|popup window would be opened, and, upon login, could be closed, posting a message back to the original window. However, some investigation is probably required into the behavior of `window.open` across windows and apps, and to think how it should interact with the asynchronous launch event API.
+
+**Third Party Authentication via Redirect**
+
+This case is very similar to that of first party auth via a redirect, except it is much more likely that the third_party is also a PWA (possibly with its own launch handler). 
+
+In this image ![Bad Login Flow](images/bad-login-flow.png) a user has logged into 'Discoverer' using Spotify. Spotify's hypothetical launch event was triggered, opening a new instance of the Spotify app where the user logged in. Spotify redirected back to Discoverer but now Discoverer is open inside Spotify, which feels wrong.
+
+**Conclusions**
+These problems seems trivially solvable on the part of the third party authentication provider: Simply do not launch an application window for authentication requests from other parties (which should be detectable from the launch/redirect url). However, this solution requires us to trust application developers to 'Do the right thing', though I would argue that this risk isn't as significant is it at first seems. These authentication providers want to give app developers a good experience as, otherwise, they will use a different provider. 
+
 ## Details
 
 Speccing this API will require amendments to the [HTML](https://html.spec.whatwg.org/) spec (**navigate** algorithm) and [Service Workers](https://www.w3.org/TR/service-workers-1) spec (where the `LaunchEvent` would live). Initially, it could exist in its own spec document, which monkey-patches the HTML spec.
