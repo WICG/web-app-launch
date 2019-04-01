@@ -194,9 +194,14 @@ Our preference here is that apps which are not installed don't receive launch ev
 Due to this concern, the initial implementation of launch events will likely ship without `window.open` support, with the intent to revisit it later.
 
 ### Login Flows
-Many websites make use of a login service hosted on a origin. This origin could be on the same domain (as in the case of google.com and accounts.google.com) or through an independent OAuth service (like how spotify.com authenticates with facebook.com). These flows are not trivially compatible with launch events, and it will require some care to ensure that we do not break sites.
+Many websites make use of a login service hosted on a different origin. This origin could be on the same domain (as in the case of google.com and accounts.google.com) or through an independent OAuth service (like how spotify.com authenticates with facebook.com). These flows are not trivially compatible with launch events, and it will require some care to ensure that we do not break sites.
 
-Three primary cases have been identified for login flows: A separate first party domain, redirecting to a third party, and a third party through a popup window. These cases are discussed in more detail below.
+Three primary cases have been identified for login flows:
+- Redirecting to a different first party origin
+- Redirecting to a third party origin
+- Opening a third party in a new tab/window.
+ 
+and are discussed in more detail below.
 
 > Disclaimer: These examples are all purely hypothetical, and are used to illustrate potential problems. They have no relationship with the actual behavior of the sites (and cannot, as launch events have not been implemented).
 
