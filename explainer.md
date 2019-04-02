@@ -141,6 +141,22 @@ This proposal restricts what would be possible with `launch` events, and could a
 - If an existing window is open and the app wants to open a new window, a flicker of the existing window will be shown as it is focused prior triggering the event
 - In terms of ergonomics, developers must be careful to register `launch` event handlers on all windows and to co-ordinate between them. Often this will involve going through the service worker anyway.
 
+#### How well will this support behavior of existing native applications?
+
+Below is a not-at-all scientific collection of how a few common apps handle files being opened. SW Launch refers to the case where we fire a launch event on the service worker, while client launch refers to a theoretical event handler on the client window.
+
+App     | SW Launch   | Client Launch   | Description
+------  | ----------- | --------------- | ---------
+VS Code | Yes         | No              | VSCode opens individual files in the last active window (fine for client launch events), unless a parent directory of the file is open in as a workspace, in which case, the file will be opened in the editor for that workspace. This cannot be handled by client events without undesirable focusing of some arbitrary client.
+Paint   | Yes         | Yes             | Always opens a new window.
+TextEdit| Yes         | No              | Opens files in a new window, if the file isn't already open, otherwise focus the window that has the file open.
+Sublime | Yes         | Yes             | Configurable. Either always open in new window, or never open in new window.
+Chrome  | Yes        | Yes             | Open in last active window.
+
+It seems clear that there are at least some cases where it is useful for applications to be able to inspect already open clients and decide where they want a file to be opened. 
+
+Particularly interesting is that in some cases, applications exposes settings for what to do when new file is opened. We briefly considered a declarative API (e.g. Paint says to always open files in a new window in its manifest). This, however, would indicate that this is likely not a workable approach.
+
 ### Whether `launch` events should *only* be triggered by navigations
 
 In the proposal described so far, all `launch` events are triggered by navigations to URLs. However, it's an open question whether this would be a pre-requisite for future `launch` events. The [File Handlers API](https://github.com/WICG/file-handling/blob/master/explainer.md) is introducing the ability for web apps to register themselves as handlers for certain file types. When designing this API there is a choice:
