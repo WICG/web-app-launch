@@ -184,9 +184,13 @@ As an aside, the `notificationclick` event has similar challenges to the `launch
 
 ### Should apps that aren't installed have launch events fired?
 
-It is unclear whether launch events should be gated on installation. Ultimately this should be up to the user agent, but it would be nice to be able to provide some kind of recommendation. 
+It is unclear whether launch events should be gated on installation. Ultimately this should be up to the user agent.
 
-Our preference here is that apps which are not installed don't receive launch events, so as to break user expectations of the web as little as possible (installed apps are a new thing). In general, we prefer not to gate APIs on installation, however, there is some precedence for granting more permissions upon installation; PiP and WebShareTarget, for example.
+`launch` events allow websites to handle links differently to how the browser would. Thus, firing launch events when a users does not have a web app installed could violate user expectations.
+- A badly behaving site could do nothing in its launch event handler (mitigations are described above but it's hard to attribute this bad behavior to the site if it hasn't been installed).
+- If a site has not been visited its launch event handler will not have been registered, so behavior could be different on subsequent visits (potentially confusing).
+
+As such, we recommend that web apps that are not installed do not have launch events fired.
 
 ### Potentially Breaking `window.open`
 `window.open` is a synchronous  API, while the nature of launch events requires them to be asynchronous. It is unclear how we will be able to reconcile these two APIs (blocking until the launch event completes doesn't seem super acceptable). This could break popup based authentication flows (and potentially more).
