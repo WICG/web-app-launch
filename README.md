@@ -1,6 +1,9 @@
 # Service Worker Launch Event
 
-Author: Matt Giuca &lt;<mgiuca@chromium.org>&gt;
+Author: Matt Giuca &lt;<mgiuca@chromium.org>&gt;<br>
+Author: Eric Willigers &lt;<ericwilligers@chromium.org>&gt;<br>
+Author: Jay Harris &lt;<harrisjay@chromium.org>&gt;<br>
+Author: Raymes Khoury &lt;<raymes@chromium.org>&gt;
 
 Date: 2017-09-22
 
