@@ -43,7 +43,7 @@ There are many different ways that web apps can be launched at present. These in
    a share target using the [Web Share Target API](https://wicg.github.io/web-share-target/level-2/).
 
 There are also ways to launch web apps which don't exist yet, but which we would like to have in the future:
-1. **File Handlers:** A user opens a file that an Image Editor web app has registered to handle.
+1. **File Handlers:** A user opens a file that an Image Editor web app has registered to handle. ([Proposal](https://github.com/WICG/file-handling)).
 2. **URL Request Handlers:** A user navigates to a PDF and it is opened using a PDF viewer web app.
 3. **Deep-link shortcuts API**. A user clicks an OS action to compose a new email with an email client. They are taken to the compose screen of the email client. (Proposed API: [proposal 1](https://gist.github.com/kenchris/0acec2790cd38dfdff0a7197ff00d1de); [proposal 2](https://docs.google.com/a/chromium.org/document/d/1WzpCnpc1N7WjDJnFmj90-Z5SALI3cSPtNrYuH1EVufg/edit)). 
 
@@ -54,7 +54,7 @@ Currently web apps have no control over how they will be launched. e.g. they hav
 Examples:
 * A music player might be playing a track; if the user clicks a link to another track in the player's scope, instead of opening a new tab to the track (possibly playing music over the existing music), it could focus the existing tab, show the new track info but keep playing the old track in the background.
 * Banking websites as well as messaging apps can often fail if users try to use them from multiple tabs. This API could be used to bounce the user back into an existing tab if they already have one open.
-* A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a tab, focus that window instead of opening a duplicate.
+* A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a window, focus that window instead of opening a duplicate.
 
 In some cases, web apps may not want to open a new window at all, and may be content to show a notification. e.g.
 * A "`magnet:`" URL is handled by a torrent client, which automatically starts downloading the file, showing a notification but not opening a new window or tab.
@@ -112,7 +112,36 @@ interface LaunchEvent : ExtendableEvent {
 ```
 Notes:
 * The `Request` that led to the navigation is included. In addition to the URL, this allows sites to inspect things like POST data (e.g. for a Web Share Target) that led to the invocation of the app. 
-## Design Questions/Concerns
+
+## Design Questions/Details
+
+### Restricting to installed apps
+
+It is recommended that user agents only fire launch events for installed web apps. There are 2 reasons for this:
+ 1. It is difficult to attribute bad behavior to misbehaving websites if they aren't installed (see the section below).
+ 2. It could be confusing if the behavior of clicking a link changes just because a user has visited a site that registered itself as a `launch` event handler. 
+
+Allowing launch events to be handled on the drive-by web could be explored in the future.
+
+### Handling Redirects
+
+We should allow launch events to be intercepted when a navigation triggers a redirect. For example imagine that https://www.example.com registers a `launch` event handler. The user then clicks a link to https://example.com. No handler is registered, so the navigation is processed. The navigation redirects to https://www.example.com. At this point, before the request is actually made, a launch event should be fired on the SW for https://www.example.com.
+
+If we don't do this, then many link clicks won't be correctly intercepted.
+
+User agents need to decide what the underlying page will do if a redirect is captured in separate window. The options are:
+- The tab could be closed
+- The tab could continue the navigation in parallel to handling the launch event
+- The tab could stop the partially processed navigation and display an error message
+- The tab could return to the page it was on prior to the navigation starting
+
+### Handling window.open()
+
+Ideally calls to window.open() would also be possible for sites to intercept and handle in a `launch` event handler without the new window opening. One challenge is that it's not sufficient to just examine the URL that's passed into window.open() and intercept it as a launch event as it may trigger a redirect as described above.
+
+As a first cut, we propose not doing anything special for window.open(). A new window will be opened as usual and a navigation started. That navigation can trigger a launch event.
+
+In future we can consider more advanced techniques to avoid opening a new window and improve the user experience.
 
 ### Addressing malicious or poorly written Sites
 
@@ -126,7 +155,6 @@ User agents can give feedback to users when a site is handling a `launch` event 
 - Show a splash screen indicating the app is launching
 - Show an entry for the app in the taskbar/dock/shelf indicating it's loading
 - Focus a previously opened window in the scope of the app
-- TODO: mitigations for non-installed sites
 
 If the app doesn't show UI after a long delay (e.g. 10 seconds), the user agent could:
 - Kill the `launch` event handler and show an error message indicating the app couldn't launch
@@ -143,9 +171,9 @@ This proposal restricts what would be possible with `launch` events, and could a
 
 #### How well will this support behavior of existing native applications?
 
-Below is a not-at-all scientific collection of how a few common apps handle files being opened. SW Launch refers to the case where we fire a launch event on the service worker, while client launch refers to a theoretical event handler on the client window.
+Below is a collection of how a few common apps handle files being opened. SW Launch refers to the case where we fire a launch event on the service worker, while window launch refers to a theoretical event handler on the client window.
 
-App     | SW Launch   | Client Launch   | Description
+App     | SW Launch   | Window Launch   | Description
 ------  | ----------- | --------------- | ---------
 VS Code | Yes         | No              | VSCode opens individual files in the last active window (fine for client launch events), unless a parent directory of the file is open in as a workspace, in which case, the file will be opened in the editor for that workspace. This cannot be handled by client events without undesirable focusing of some arbitrary client.
 Paint   | Yes         | Yes             | Always opens a new window.
@@ -154,41 +182,6 @@ Sublime | Yes         | Yes             | Configurable. Either always open in ne
 Chrome  | Yes        | Yes             | Open in last active window.
 
 It seems clear that there are at least some cases where it is useful for applications to be able to inspect already open clients and decide where they want a file to be opened. 
-
-Particularly interesting is that in some cases, applications exposes settings for what to do when new file is opened. We briefly considered a declarative API (e.g. Paint says to always open files in a new window in its manifest). This, however, would indicate that this is likely not a workable approach.
-
-### Whether `launch` events should *only* be triggered by navigations
-
-In the proposal described so far, all `launch` events are triggered by navigations to URLs. However, it's an open question whether this would be a pre-requisite for future `launch` events. The [File Handlers API](https://github.com/WICG/file-handling/blob/master/explainer.md) is introducing the ability for web apps to register themselves as handlers for certain file types. When designing this API there is a choice:
-1. Pass file handles to the app via the `launch` event in the service worker
-2. Invent a new way of passing file handles to windows. For example, the browser could launch a URL and pass blob URLs as query parameters, e.g. https://example.com/file_handler?file1=blob://abcdefg&file2=blob://tuvwxyz.
-
-Option 1 seems more intuitive even though there is no precedent for this. However it requires `launch` events being more generally designed: 
-
-```ts
-enum LaunchType {
-  "navigation",
-  "file"
-};
-
-interface LaunchEvent : ExtendableEvent {
-  readonly attribute LaunchType type;
-}
-
-interface NavigationLaunchEvent : LaunchEvent {
-  readonly attribute Request request;
-}
-
-interface FileLaunchEvent : LaunchEvent {
-  readonly attribute FileSystemFileHandle[] files;
-}
-```
-
-Alternatively, rather than specifying a `type` attribute and class hierarchy, different types of event could be fired in different cases, such as `launch-navigation` and `launch-file`, or invocation specific arguments could be optional.
-
-On the other hand, the debate of whether to fire a SW event or to trigger a URL navigation with parameters has come up recently in the Deep Linking API [proposal](https://docs.google.com/document/d/1WzpCnpc1N7WjDJnFmj90-Z5SALI3cSPtNrYuH1EVufg/edit#). In that document, mgiuca@ suggests:
-
-> Shortcuts/actions should open URLs, not fire a special SW event. This fits the Web’s defining characteristic, that “places” inside an app should be addressable via a URL.
 
 ### Responding with a Client vs. calling Client.focus()
 
