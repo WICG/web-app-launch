@@ -131,9 +131,7 @@ If we don't do this, then many link clicks won't be correctly intercepted.
 
 When an `launch` event is captured as the result of a redirect, the behavior of the underlying page needs to be decided. User agents should have freedom to experiment here, but some options are:
 - The tab could be closed. This would be good behavior if a tab was only opened to process the navigation before it could be captured by the app.
-- The tab could return to the page it was on prior to the navigation starting. This seems like sensible behavior in the general case - allowing the user to continue on the site they were on prior to clicking the link handled by the launch event. The user may lose state on the site as a result of a navigation happening, but this wouldn't be unexpected since they've clicked a link.
-- The tab could continue the navigation in parallel to handling the launch event. This isn't ideal as the app that is being navigated to is already handling the launch event.
-- The tab could stop the partially processed navigation and display an error message. 
+- The tab could return to the page it was on prior to the navigation starting. This seems like sensible behavior in the general case, allowing the user to continue on the site they were on prior to clicking the link handled by the launch event. The user may lose state on the site as a result of a navigation happening, but this wouldn't be unexpected since they've clicked a link.
 
 ### Handling window.open()
 
