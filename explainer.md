@@ -133,11 +133,11 @@ When an `launch` event is captured as the result of a redirect, the behavior of 
 - The tab could be closed. This would be good behavior if a tab was only opened to process the navigation before it could be captured by the app.
 - The tab could return to the page it was on prior to the navigation starting. This seems like sensible behavior in the general case, allowing the user to continue on the site they were on prior to clicking the link handled by the launch event. The user may lose state on the site as a result of a navigation happening, but this wouldn't be unexpected since they've clicked a link.
 
-### Handling window.open()
+### Handling `window.open()`
 
-Ideally calls to window.open() would also be possible for sites to intercept and handle in a `launch` event handler without the new window opening. One challenge is that it's not sufficient to just examine the URL that's passed into window.open() and intercept it as a launch event as it may trigger a redirect as described above.
+Ideally calls to `window.open()` would also be possible for sites to intercept and handle in a `launch` event handler without the new window opening. One challenge is that it's not sufficient to just examine the URL that's passed into `window.open()` and intercept it as a launch event as it may trigger a redirect as described above.
 
-As a first cut, we propose not doing anything special for window.open(). A new window will be opened as usual and a navigation started. That navigation can trigger a launch event.
+As a first cut, we propose not doing anything special for `window.open()`. A new window will be opened as usual and a navigation started. That navigation can trigger a launch event.
 
 In future we can consider more advanced techniques to avoid opening a new window and improve the user experience.
 
