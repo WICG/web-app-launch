@@ -115,7 +115,7 @@ Notes:
 
 ## Design Questions/Details
 
-### Restricting to installed apps
+### Restricting launch events to installed websites
 
 It is recommended that user agents only fire launch events for installed web apps. There are 2 reasons for this:
  1. It is difficult to attribute bad behavior to misbehaving websites if they aren't installed (see the section below).
@@ -123,17 +123,17 @@ It is recommended that user agents only fire launch events for installed web app
 
 Allowing launch events to be handled on the drive-by web could be explored in the future.
 
-### Handling Redirects
+### Handling redirects which trigger launch events
 
 We should allow launch events to be intercepted when a navigation triggers a redirect. For example imagine that https://www.example.com registers a `launch` event handler. The user then clicks a link to https://example.com. No handler is registered, so the navigation is processed. The navigation redirects to https://www.example.com. At this point, before the request is actually made, a launch event should be fired on the SW for https://www.example.com.
 
 If we don't do this, then many link clicks won't be correctly intercepted.
 
-User agents need to decide what the underlying page will do if a redirect is captured in separate window. The options are:
-- The tab could be closed
-- The tab could continue the navigation in parallel to handling the launch event
-- The tab could stop the partially processed navigation and display an error message
-- The tab could return to the page it was on prior to the navigation starting
+When an `launch` event is captured as the result of a redirect, the behavior of the underlying page needs to be decided. User agents should have freedom to experiment here, but some options are:
+- The tab could be closed. This would be good behavior if a tab was only opened to process the navigation before it could be captured by the app.
+- The tab could return to the page it was on prior to the navigation starting. This seems like sensible behavior in the general case - allowing the user to continue on the site they were on prior to clicking the link handled by the launch event. The user may lose state on the site as a result of a navigation happening, but this wouldn't be unexpected since they've clicked a link.
+- The tab could continue the navigation in parallel to handling the launch event. This isn't ideal as the app that is being navigated to is already handling the launch event.
+- The tab could stop the partially processed navigation and display an error message. 
 
 ### Handling window.open()
 
@@ -143,7 +143,11 @@ As a first cut, we propose not doing anything special for window.open(). A new w
 
 In future we can consider more advanced techniques to avoid opening a new window and improve the user experience.
 
-### Addressing malicious or poorly written Sites
+### Requiring a user gesture to trigger launch events
+
+Since a launch event can result in a new window being created or an existing window being focused, a user gesture should be required. 
+
+### Addressing malicious or poorly written sites
 
 not-a-great-experience.com could register a `launch` handler that just calls `preventDefault` without doing anything. This would result in a poor user experience as the user could click links into the site, or share files with the site and nothing would happen.
 
