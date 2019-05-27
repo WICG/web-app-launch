@@ -21,13 +21,11 @@ self.addEventListener('launch', event => {
     // If there isn't one available, open a new window.
     if (allClients.length === 0) {
       clients.openWindow(event.request.url);
-      event.preventDefault();
       return;
     }
 
     const client = allClients[0];
     client.focus();
-    event.preventDefault();
   }());
 });
 ```
@@ -86,7 +84,6 @@ self.addEventListener('launch', event => {
     // If there isn't one available, open a new window.
     if (allClients.length === 0) {
       const client = await clients.openWindow(event.request.url);
-      client.focus();
       return;
     }
 
@@ -102,7 +99,7 @@ Notes:
 * If the launch handler does not:
   1. Focus a client.
   2. Open a new client.
-  3. Show a notification (note: permission to show notifications is required)
+  3. Show a notification (note:permission to show notifications is required)
     
   then the user agent should assume that the launch handler did not handle the launch, and should continue as if there were no `launch` event handler.
 
@@ -152,7 +149,7 @@ Since a launch event can result in a new window being created or an existing win
 
 ### Addressing malicious or poorly written sites
 
-not-a-great-experience.com could register a `launch` handler that just calls `preventDefault` without doing anything. This would result in a poor user experience as the user could click links into the site, or share files with the site and nothing would happen.
+not-a-great-experience.com could register a `launch` handler that just does nothing. This would result in a poor user experience as the user could click links into the site, or share files with the site and nothing would happen.
 
 Similarly, slow-experience.com may unintentionally do a lot of processing in the `launch` event handler before it opens any UI surface. The user could open a file that would be handled by the app and not see anything for a long time. This would also be a poor user experience.
 
