@@ -6,7 +6,7 @@ Author: Jay Harris &lt;<harrisjay@chromium.org>&gt;<br>
 Author: Raymes Khoury &lt;<raymes@chromium.org>&gt;
 
 Created: 2017-09-22
-Updated: 2019-03-15
+Updated: 2019-05-27
 
 ## Introduction
 
@@ -85,23 +85,28 @@ self.addEventListener('launch', event => {
     const allClients = await clients.matchAll();
     // If there isn't one available, open a new window.
     if (allClients.length === 0) {
-      clients.openWindow(event.request.url)
-      event.preventDefault();
+      const client = await clients.openWindow(event.request.url);
+      client.focus();
       return;
     }
 
     const client = allClients[0];
     client.postMessage(event.request.url);
     client.focus();
-    event.preventDefault();
   }());
 });
 ```
 Notes:
 * `waitUntil` delays the user agent from launching and waits for the promise. This is necessary because inspecting existing client windows happens asynchronously.
-* `preventDefault` is analogous to [`FetchEvent`](https://www.w3.org/TR/service-workers-1/#fetch-event-section)'s `respondWith` method. If it is called (during the `launch` event handler), it stops the user agent from completing the navigation that triggered the `launch`. Nothing further happens (the user agent assumes the app has handled it).
 * The `launch` event is considered to be "allowed to show a popup", so that `Clients.openWindow` and `Client.focus` can be used.
-* If the event handler doesn't call `event.preventDefault()`, continue the original navigation as if the `launch` event wasn't fired.
+* If the launch handler does not:
+  1. Focus a client.
+  2. Open a new client.
+  3. Show a notification (note: permission to show notifications is required)
+    
+  then the user agent should assume that the launch handler did not handle the launch, and should continue as if there were no `launch` event handler.
+
+> Note: We need to determine what should happen if the launch handler reads data from a POST request but doesn't handle the launch.
 
 ### Event Definition
 
