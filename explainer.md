@@ -103,8 +103,6 @@ Notes:
     
   then the user agent should assume that the launch handler did not handle the launch, and should continue as if there were no `launch` event handler.
 
-> Note: We need to determine what should happen if the launch handler reads data from a POST request but doesn't handle the launch.
-
 ### Event Definition
 
 ```ts
@@ -117,7 +115,7 @@ Notes:
 
 ## Design Questions/Details
 
-### Restricting launch events to installed websites
+### Restricting launch events to installed webbasites
 
 It is recommended that user agents only fire launch events for installed web apps. There are 2 reasons for this:
  1. It is difficult to attribute bad behavior to misbehaving websites if they aren't installed (see the section below).
