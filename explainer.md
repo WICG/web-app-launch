@@ -6,7 +6,7 @@ Author: Jay Harris &lt;<harrisjay@chromium.org>&gt;<br>
 Author: Raymes Khoury &lt;<raymes@chromium.org>&gt;
 
 Created: 2017-09-22
-Updated: 2019-03-15
+Updated: 2019-05-27
 
 ## Introduction
 
@@ -21,13 +21,11 @@ self.addEventListener('launch', event => {
     // If there isn't one available, open a new window.
     if (allClients.length === 0) {
       clients.openWindow(event.request.url);
-      event.preventDefault();
       return;
     }
 
     const client = allClients[0];
     client.focus();
-    event.preventDefault();
   }());
 });
 ```
@@ -53,8 +51,8 @@ Currently web apps have no control over how they will be launched. e.g. they hav
 
 Examples:
 * A music player might be playing a track; if the user clicks a link to another track in the player's scope, instead of opening a new tab to the track (possibly playing music over the existing music), it could focus the existing tab, show the new track info but keep playing the old track in the background.
-* Banking websites as well as messaging apps can often fail if users try to use them from multiple tabs. This API could be used to bounce the user back into an existing tab if they already have one open.
 * A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a window, focus that window instead of opening a duplicate.
+* A video player might be playing a video. If the user clicks an external link to a second video, that video could be queued instead of interrupting playback.
 
 In some cases, web apps may not want to open a new window at all, and may be content to show a notification. e.g.
 * A "`magnet:`" URL is handled by a torrent client, which automatically starts downloading the file, showing a notification but not opening a new window or tab.
@@ -85,23 +83,25 @@ self.addEventListener('launch', event => {
     const allClients = await clients.matchAll();
     // If there isn't one available, open a new window.
     if (allClients.length === 0) {
-      clients.openWindow(event.request.url)
-      event.preventDefault();
+      const client = await clients.openWindow(event.request.url);
       return;
     }
 
     const client = allClients[0];
     client.postMessage(event.request.url);
     client.focus();
-    event.preventDefault();
   }());
 });
 ```
 Notes:
 * `waitUntil` delays the user agent from launching and waits for the promise. This is necessary because inspecting existing client windows happens asynchronously.
-* `preventDefault` is analogous to [`FetchEvent`](https://www.w3.org/TR/service-workers-1/#fetch-event-section)'s `respondWith` method. If it is called (during the `launch` event handler), it stops the user agent from completing the navigation that triggered the `launch`. Nothing further happens (the user agent assumes the app has handled it).
 * The `launch` event is considered to be "allowed to show a popup", so that `Clients.openWindow` and `Client.focus` can be used.
-* If the event handler doesn't call `event.preventDefault()`, continue the original navigation as if the `launch` event wasn't fired.
+* If the launch handler does not:
+  1. Focus a client.
+  2. Open a new client.
+  3. Show a notification (Note: permission to show notifications is required).
+    
+  then the user agent should assume that the launch handler did not handle the launch, and should continue as if there were no `launch` event handler.
 
 ### Event Definition
 
@@ -115,7 +115,7 @@ Notes:
 
 ## Design Questions/Details
 
-### Restricting launch events to installed websites
+### Restricting launch events to installed webbasites
 
 It is recommended that user agents only fire launch events for installed web apps. There are 2 reasons for this:
  1. It is difficult to attribute bad behavior to misbehaving websites if they aren't installed (see the section below).
@@ -147,7 +147,7 @@ Since a launch event can result in a new window being created or an existing win
 
 ### Addressing malicious or poorly written sites
 
-not-a-great-experience.com could register a `launch` handler that just calls `preventDefault` without doing anything. This would result in a poor user experience as the user could click links into the site, or share files with the site and nothing would happen.
+not-a-great-experience.com could register a `launch` handler that just does nothing. This would result in a poor user experience as the user could click links into the site, or share files with the site and nothing would happen.
 
 Similarly, slow-experience.com may unintentionally do a lot of processing in the `launch` event handler before it opens any UI surface. The user could open a file that would be handled by the app and not see anything for a long time. This would also be a poor user experience.
 
