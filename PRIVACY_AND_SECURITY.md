@@ -21,7 +21,9 @@ No.
 
 ### 3.5 Does this specification expose any other data to an origin that it doesn’t currently have access to?
 
-Kind of. Origins will explicitly be told how they have been launched. Previously, they would have had to infer this based on requests (though this information **WAS** previously inferrible).
+Kind of.
+
+The new APIs will tell sites what caused their launch (e.g. 'file_handler', 'share_target'). Previously this information was not explicit, but could be inferred based on the url that was being visited (as sites are able to specify which url they want shares/file launches to open).
 
 ### 3.6 Does this specification enable new script execution/loading mechanisms?
 
@@ -50,7 +52,15 @@ No.
 
 ### 3.11 Does this specification allow an origin some measure of control over a user agent’s native UI?
 
-No.
+Kind of. This API will allow sites to control what happens in some situations (such as clicking a link into a PWA, opening a file, or sharing something to the PWA).
+
+Currently, this is likely to involve an installed PWA choosing to either
+    
+1. Open a new window
+2. Focus an existing window
+3. Show a notification (assuming relevant permissions have been granted).
+
+In addition, this decision will only be delegated to the site in the case where the user hasn't expressed some preference (e.g. open all links in browser, open this link in a new tab/window).
 
 
 ### 3.12 Does this specification expose temporary identifiers to the web?
@@ -65,7 +75,7 @@ Only first party contexts will receive launch events.
 
 ### 3.14 How should this specification work in the context of a user agent’s "incognito" mode?
 
-Launch events will be gated by installation. Sites may not be installed in incognito mode, so, while a site can still specify a launch event handler, it will never be fired (nor can they expect it to, even in non-incognito modes).
+Launch events will behave the same in incognito and normal browsing contexts.
 
 ### 3.15 Does this specification persist data to a user’s local device?
 
