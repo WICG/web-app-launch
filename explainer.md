@@ -51,8 +51,8 @@ Currently web apps have no control over how they will be launched. e.g. they hav
 
 Examples:
 * A music player might be playing a track; if the user clicks a link to another track in the player's scope, instead of opening a new tab to the track (possibly playing music over the existing music), it could focus the existing tab, show the new track info but keep playing the old track in the background.
-* Banking websites as well as messaging apps can often fail if users try to use them from multiple tabs. This API could be used to bounce the user back into an existing tab if they already have one open.
 * A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a window, focus that window instead of opening a duplicate.
+* A video player might be playing a video. If the user clicks an external link to a second video, that video could be queued instead of interrupting playback.
 
 In some cases, web apps may not want to open a new window at all, and may be content to show a notification. e.g.
 * A "`magnet:`" URL is handled by a torrent client, which automatically starts downloading the file, showing a notification but not opening a new window or tab.
@@ -99,7 +99,7 @@ Notes:
 * If the launch handler does not:
   1. Focus a client.
   2. Open a new client.
-  3. Show a notification (note:permission to show notifications is required)
+  3. Show a notification (Note: permission to show notifications is required).
     
   then the user agent should assume that the launch handler did not handle the launch, and should continue as if there were no `launch` event handler.
 
