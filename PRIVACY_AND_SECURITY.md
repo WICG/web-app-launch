@@ -60,7 +60,7 @@ Currently, this is likely to involve an installed PWA choosing to either
 2. Focus an existing window
 3. Show a notification (assuming relevant permissions have been granted).
 
-In addition, this decision will only be delegated to the site in the case where the user hasn't expressed some preference (e.g. open all links in browser, open this link in a new tab/window).
+In addition, this decision should only be delegated to the site in the case where the user hasn't expressed some preference (e.g. open all links in browser, open this link in a new tab/window).
 
 
 ### 3.12 Does this specification expose temporary identifiers to the web?
