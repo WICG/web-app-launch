@@ -42,7 +42,7 @@ There are many different ways that web apps can be launched at present. These in
 
 There are also ways to launch web apps which don't exist yet, but which we would like to have in the future:
 1. **File Handlers:** A user opens a file that an Image Editor web app has registered to handle. ([Proposal](https://github.com/WICG/file-handling)).
-2. **URL Request Handlers:** A user navigates to a PDF and it is opened using a PDF viewer web app.
+2. **Content Type Handlers:** A user navigates to a PDF and it is opened using a PDF viewer web app.
 3. **Deep-link shortcuts API**. A user clicks an OS action to compose a new email with an email client. They are taken to the compose screen of the email client. (Proposed API: [proposal 1](https://gist.github.com/kenchris/0acec2790cd38dfdff0a7197ff00d1de); [proposal 2](https://docs.google.com/a/chromium.org/document/d/1WzpCnpc1N7WjDJnFmj90-Z5SALI3cSPtNrYuH1EVufg/edit)). 
 
 ## Motivating Examples
@@ -143,7 +143,7 @@ In future we can consider more advanced techniques to avoid opening a new window
 
 ### Requiring a user gesture to trigger launch events
 
-Since a launch event can result in a new window being created or an existing window being focused, a user gesture should be required. 
+Since a launch event can result in a new window being created or an existing window being focused, a user gesture should be required. In particular, a launch event should not be able to trigger another launch event without a subsequent user gesture.
 
 ### Addressing malicious or poorly written sites
 
