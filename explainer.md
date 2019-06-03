@@ -8,9 +8,19 @@ Author: Raymes Khoury &lt;<raymes@chromium.org>&gt;
 Created: 2017-09-22
 Updated: 2019-05-27
 
-## Introduction
+## Introduction and Motivation
 
-This explainer proposes a new API for Service Workers that allows web applications to control which window/tab they will open in.
+Currently web apps have no control over how they will be launched. e.g. they have no control over whether launches will happen in a new window/tab or an existing window/tab that the web app controls. This explainer proposes a new API for Service Workers that allows web applications to control which window/tab they will open in.
+
+Examples of cases where this can be useful:
+* A chat web app runs in a single window. Users may receive links to specific chat rooms to open in that app. Clicking a link to a chat room should focus the existing window and open the chat room rather than opening a new instance of the chat app.
+* A music player might be playing a track; if the user clicks a link to another track, instead of opening a new tab to the track (possibly playing music over the existing music), it could focus the existing tab, show the new track info but keep playing the old track in the background.
+* A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a window, focus that window instead of opening a duplicate.
+* A video player might be playing a video. If the user clicks an external link to a second video, that video could be queued instead of interrupting playback.
+
+In some cases, web apps may not want to open a new window at all, and may be content to show a notification. e.g.
+* A "`magnet:`" URL is handled by a torrent client, which automatically starts downloading the file, showing a notification but not opening a new window or tab.
+* A "save for later" tool that has a share target. When the share target is chosen, it just shows a notification "Saved for later", but doesn't actually spawn a browsing context.
 
 Example Service Worker code to handle all launches of a web app in an existing window if one exists:
 
@@ -42,21 +52,8 @@ There are many different ways that web apps can be launched at present. These in
 
 There are also ways to launch web apps which don't exist yet, but which we would like to have in the future:
 1. **File Handlers:** A user opens a file that an Image Editor web app has registered to handle. ([Proposal](https://github.com/WICG/file-handling)).
-2. **URL Request Handlers:** A user navigates to a PDF and it is opened using a PDF viewer web app.
+2. **Content Type Handlers:** A user navigates to a PDF and it is opened using a PDF viewer web app.
 3. **Deep-link shortcuts API**. A user clicks an OS action to compose a new email with an email client. They are taken to the compose screen of the email client. (Proposed API: [proposal 1](https://gist.github.com/kenchris/0acec2790cd38dfdff0a7197ff00d1de); [proposal 2](https://docs.google.com/a/chromium.org/document/d/1WzpCnpc1N7WjDJnFmj90-Z5SALI3cSPtNrYuH1EVufg/edit)). 
-
-## Motivating Examples
-
-Currently web apps have no control over how they will be launched. e.g. they have no control over whether launches will happen in a new window/tab or an existing window/tab that the web app controls. This explainer proposes a new API for Service Workers that allows web applications to control which window/tab they will open in.
-
-Examples:
-* A music player might be playing a track; if the user clicks a link to another track in the player's scope, instead of opening a new tab to the track (possibly playing music over the existing music), it could focus the existing tab, show the new track info but keep playing the old track in the background.
-* A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a window, focus that window instead of opening a duplicate.
-* A video player might be playing a video. If the user clicks an external link to a second video, that video could be queued instead of interrupting playback.
-
-In some cases, web apps may not want to open a new window at all, and may be content to show a notification. e.g.
-* A "`magnet:`" URL is handled by a torrent client, which automatically starts downloading the file, showing a notification but not opening a new window or tab.
-* A "save for later" tool that has a share target. When the share target is chosen, it just shows a notification "Saved for later", but doesn't actually spawn a browsing context.
 
 ## `launch` Event
 
@@ -143,7 +140,7 @@ In future we can consider more advanced techniques to avoid opening a new window
 
 ### Requiring a user gesture to trigger launch events
 
-Since a launch event can result in a new window being created or an existing window being focused, a user gesture should be required. 
+Since a launch event can result in a new window being created or an existing window being focused, a user gesture should be required. In particular, a launch event should not be able to trigger another launch event without a subsequent user gesture.
 
 ### Addressing malicious or poorly written sites
 
