@@ -112,7 +112,7 @@ Notes:
 
 ## Design Questions/Details
 
-### Restricting launch events to installed webbasites
+### Restricting launch events to installed websites
 
 It is recommended that user agents only fire launch events for installed web apps. There are 2 reasons for this:
  1. It is difficult to attribute bad behavior to misbehaving websites if they aren't installed (see the section below).
