@@ -9,7 +9,7 @@ Date: 2020-05-25
 
 [sw-launch](https://github.com/WICG/sw-launch) has been proposed for a number of years and has never made it past a proposal stage, largely due to the complexity involved in both spec and implementation (a complex effort spanning PWAs, service workers, and HTML navigation stack).
 
-Very recently (May 2020), Lu Huang of Microsoft proposed “[URL Handlers](https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/master/PwaUriHandler/explainer.md)” which would be a declarative (manifest) feature that gives _some_ of what sw-launch is doing. There’s a lot of overlap between it and sw-launch (but notably, it has a different focus, proposing cross-origin link capturing which is not a goal here, but lacking the ability for the site to customize the link capturing behaviour). [[This is my initial response to that proposal](https://github.com/MicrosoftEdge/MSEdgeExplainers/issues/300#issuecomment-627759147).]
+Very recently (May 2020), Lu Huang of Microsoft proposed “[URL Handlers](https://github.com/WICG/pwa-url-handler/blob/master/explainer.md)” which would be a declarative (manifest) feature that gives _some_ of what sw-launch is doing. There’s a lot of overlap between it and sw-launch (but notably, it has a different focus, proposing cross-origin link capturing which is not a goal here, but lacking the ability for the site to customize the link capturing behaviour). [[This is my initial response to that proposal](https://github.com/MicrosoftEdge/MSEdgeExplainers/issues/300#issuecomment-627759147).]
 
 In this doc, we explore an alternative to sw-launch that is less powerful, but declarative, and has the option of expanding into the full launch event later on.
 
@@ -43,8 +43,8 @@ In this doc, we explore an alternative to sw-launch that is less powerful, but d
 
 
 
-*   Capturing links from origin A to open in a PWA on origin B (see “[URL Handlers](https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/master/PwaUriHandler/explainer.md)” proposal which has this as an explicit goal).
-*   Defining a separate scope for link capturing, separate from the existing [navigation scope](https://www.w3.org/TR/appmanifest/#navigation-scope) (see “[URL Handlers](https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/master/PwaUriHandler/explainer.md)” proposal which has this as an explicit goal).
+*   Capturing links from origin A to open in a PWA on origin B (see “[URL Handlers](https://github.com/WICG/pwa-url-handler/blob/master/explainer.md)” proposal which has this as an explicit goal).
+*   Defining a separate scope for link capturing, separate from the existing [navigation scope](https://www.w3.org/TR/appmanifest/#navigation-scope) (see “[URL Handlers](https://github.com/WICG/pwa-url-handler/blob/master/explainer.md)” proposal which has this as an explicit goal).
 *   Allowing a web app to force itself to only ever be in a single window. (The user will always be able to override a single-window setting, since after all, these are just web pages and the user is in control of navigation.)
 *   If multiple clients are open, allowing the application to choose which client to focus. [This is an extended goal of the full sw-launch design.]
 *   Stopping a navigation from opening any windows, and handling the navigation in the background. [This is an extended goal of the full sw-launch design.]
@@ -85,7 +85,7 @@ A new manifest field “`capture_links`” is introduced with a string-typed val
 This proposal is forwards-compatible with the original [sw-launch](https://github.com/WICG/sw-launch) proposal in WICG. It covers many of the same use cases, but omits the more advanced use cases (specifically, the option to choose which client to focus, and the option to not show any UI). By adding a new “`capture_links`” mode (“`serviceworker`”), the app can explicitly opt in to receiving the “`launch`” event in the service worker, enabling those other use cases, while the majority of uses can be achieved without having to write extra service worker code.
 
 
-### [MSEdgeExplainers: URL Handlers](https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/master/PwaUriHandler/explainer.md)
+### [WICG: URL Handlers](https://github.com/WICG/pwa-url-handler/blob/master/explainer.md)
 
 These two proposals are ostensibly both “link capturing”, but upon close inspection, they are quite orthogonal. Huang’s URL Handlers deals with _what_ is captured (i.e., the set of URLs associated with an app), which my proposal simply assumes to be the app’s navigation scope. My proposal deals with _how_ the app works once invoked via a captured link.
 
