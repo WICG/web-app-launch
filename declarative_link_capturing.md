@@ -99,7 +99,7 @@ File Handling defines a “`launchQueue`” variable that was intended to be exp
 
 
 *   `none`, `new-client` or `existing-client-navigate` all result in a new browsing context being created. This just works as normal (create a launchQueue and put a single item in it).
-*   `existing_client_event` would push a new file handle to the `launchQueue` of the existing context before firing the `launch` event.
+*   `existing-client-event` would push a new file handle to the `launchQueue` of the existing context before firing the `launch` event.
 *   (future) `serviceworker` would put the file handle in the service worker’s `launch` event, which can then be forwarded to an existing client’s `launchQueue`.
 
 
