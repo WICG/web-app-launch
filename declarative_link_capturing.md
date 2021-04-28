@@ -123,8 +123,25 @@ All of the other link capture modes would behave as defined above (e.g., “`exi
 *   Figure out how to capture POST requests in each of the above modes. (For example, “`existing-client-event`” might have to encode the POST data in the event.)
 *   Having the user agent arbitrarily choose an existing window (in the “`existing-client-*` modes) may not be very good behaviour for any app. For example, you may have two windows open: one on the main application and one on a help article. You would want to message the main application window, not the help article. We may need to define more control over which window gets targeted.
 
+## Security & Privacy Questionnaire
+
+https://www.w3.org/TR/security-privacy-questionnaire/
+
+**2.11. Does this specification allow an origin some measure of control over a user agent’s native UI?**
+
+Yes. This API allows sites new additional control options:
+
+* Being able to automatically open installed apps in a window (this uses existing UI but makes it possible for the site to automatically trigger it).
+* Focus an existing window on its own domain and fire an event containing the clicked URL. This is intended to allow the site to navigate an existing window to a new page, overriding the default HTML navigation flow.
+
+**2.14. How does this specification work in the context of a user agent’s Private Browsing or "incognito" mode?**
+
+This probably should not work in incognito mode. (We don't want a link clicked in Incognito to open in a non-Incognito app.) The browser could also give a warning that you are leaving incognito mode, which is what Chrome does when link capturing to Android apps.
+
 ## Changelog
 
+* 2021-04-28
+  * Added Security & Privacy Questionnaire
 * 2020-01-08
   * Got rid of `auto` (just says that `none` is the default).
   * Converted underscores (`_`) to dashes (`-`) in enum values.
