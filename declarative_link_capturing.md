@@ -16,7 +16,7 @@ We found that almost all `launch` use cases could be covered by a handful of fix
 
 
 
-*   Link capturing for PWAs: a PWA that wants to open in a window whenever the user clicks a link to a URL within that app’s [navigation scope](https://www.w3.org/TR/appmanifest/#navigation-scope), rather than opening in a browser tab.
+*   Link capturing for PWAs: a PWA that wants to open in a window whenever the user clicks a link to a URL within that app’s [navigation scope](https://www.w3.org/TR/appmanifest/#nav-scope), rather than opening in a browser tab.
 *   Capturing links and navigations from the following (non-exhaustive list of) sources:
     *   Clicked links from other web pages.
     *   URL launch from a native app in the operating system.
