@@ -153,7 +153,7 @@ If unspecified then `launch_handler` defaults to
   and instead have `targetURL` in the enqueued `LaunchParams` set to the
   launch's target URL.
 
-Both `route_to` and `navigate_client` also accept a list of values, the
+Both `route_to` and `navigate_existing_client` also accept a list of values, the
 first valid value will be used. This is to allow new values to be added to
 the spec without breaking backwards compatibility with old implementations by
 using them.\
@@ -197,7 +197,7 @@ web app windows:
     "description": "This app will navigate existing clients unless it was launched via the share target API.",
     "launch_handler": {
       "route_to": "existing",
-      "navigate_client": true
+      "navigate_existing_client": true
     },
     "share_target": {
       "action": "share.html",
@@ -207,7 +207,7 @@ web app windows:
         "url": "link"
       },
       "launch_handler": {
-        "navigate_client": false
+        "navigate_existing_client": false
       }
     }
   }
