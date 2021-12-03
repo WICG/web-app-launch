@@ -135,7 +135,7 @@ If unspecified then `launch_handler` defaults to
 `{"route_to": "auto", "navigate_existing_client": "always"}`.
 
 `route_to`:
-- `new_-_client`: A new browsing context is created in a web app window to load
+- `new_client`: A new browsing context is created in a web app window to load
   the launch's target URL.
 - `existing_client`: The most recently interacted with browsing context in a web
   app window for the app being launched is chosen to handle the launch. How the
