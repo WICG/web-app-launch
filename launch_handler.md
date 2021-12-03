@@ -126,7 +126,7 @@ client selection and navigation behaviour for web app launches.
 The shape of this member is as follows:
 ```
 "launch_handler": {
-  "route_to": "new-client" | "existing-client" | "auto",
+  "route_to": "new_client" | "existing_client" | "auto",
   "navigate_existing_client": "always" | "never",
 }
 ```
@@ -135,16 +135,16 @@ If unspecified then `launch_handler` defaults to
 `{"route_to": "auto", "navigate_existing_client": "always"}`.
 
 `route_to`:
-- `new-client`: A new browsing context is created in a web app window to load
+- `new_-_client`: A new browsing context is created in a web app window to load
   the launch's target URL.
-- `existing-client`: The most recently interacted with browsing context in a web
+- `existing_client`: The most recently interacted with browsing context in a web
   app window for the app being launched is chosen to handle the launch. How the
   launch is handled within that browsing context depends on
   `navigate_existing_client`.
 - `auto`: The behaviour is up to the user agent to decide what works best for
   the platform. E.g. mobile devices only support single clients and would use
-  `existing-client` while desktop devices support multiple windows and would use
-  `new-client` to avoid data loss.
+  `existing_client` while desktop devices support multiple windows and would use
+  `new_client` to avoid data loss.
 
 `navigate_existing_client`:
 - `always`: existing browsing contexts chosen for launch will navigate the
@@ -157,10 +157,10 @@ Both `route_to` and `navigate_existing_client` also accept a list of values, the
 first valid value will be used. This is to allow new values to be added to
 the spec without breaking backwards compatibility with old implementations by
 using them.\
-For example if `"matching-url-client"` were added sites would specify
-`"route_to": ["matching-url-client", "existing-client"]` to continue
+For example if `"matching_url_client"` were added sites would specify
+`"route_to": ["matching_url_client", "existing_client"]` to continue
 to control the behaviour of older browsers that didn't support
-`"matching-url-client"`.
+`"matching_url_client"`.
 
 Example manifest that choses to receive all app launches as events in existing
 web app windows:
@@ -275,7 +275,7 @@ proposal with a few changes:
 ### [Tabbed Application Mode](https://github.com/w3c/manifest/issues/737)
 
 This proposal is intended to work in tandem with tabbed mode web app windows.
-The behaviour of `"route_to": "new-client"` with an already open tabbed window
+The behaviour of `"route_to": "new_client"` with an already open tabbed window
 is to open a new tab in that window.
 
 
