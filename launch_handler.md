@@ -132,7 +132,7 @@ The shape of this member is as follows:
 ```
 
 If unspecified then `launch_handler` defaults to
-`{"route_to": "auto", "navigate-existing-client": "always"}`.
+`{"route_to": "auto", "navigate_existing_client": "always"}`.
 
 `route_to`:
 - `new-client`: A new browsing context is created in a web app window to load
