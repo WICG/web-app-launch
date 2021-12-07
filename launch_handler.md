@@ -140,13 +140,13 @@ If unspecified then `launch_handler` defaults to
 - `existing-client`: The most recently interacted with browsing context in a web
   app window for the app being launched is chosen to handle the launch. How the
   launch is handled within that browsing context depends on
-  `navigate-existing-client`.
+  `navigate_existing_client`.
 - `auto`: The behaviour is up to the user agent to decide what works best for
   the platform. E.g. mobile devices only support single clients and would use
   `existing-client` while desktop devices support multiple windows and would use
   `new-client` to avoid data loss.
 
-`navigate-existing-client`:
+`navigate_existing_client`:
 - `always`: existing browsing contexts chosen for launch will navigate the
   browsing context to the launch's target URL.
 - `never`: existing browsing contexts chosen for launch will not be navigated
