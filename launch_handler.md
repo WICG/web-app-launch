@@ -127,7 +127,7 @@ The shape of this member is as follows:
 ```
 "launch_handler": {
   "route_to": "new-client" | "existing-client" | "auto",
-  "navigate_existing_client": "always" | "never",
+  "navigate_existing_client": "always" | "never"
 }
 ```
 
