@@ -1,13 +1,22 @@
 # Web App Launch Handling
 
-Authors: alancutter@, mgiuca@, dominickn@
-Last updated: 2021-07-09
+Authors: <alancutter@chromium.org>, <mgiuca@chromium.org>,
+<dominickn@chromium.org><br>
+Last updated: 2022-03-03
 
 ## Overview
 
-This document describes a new `launch_handler` manifest member that enables
-web apps to customise their launch behaviour across all types of app launch
-triggers.
+Some web apps are designed to work in a single window (e.g. a music player) and
+aren't intended to be used across multiple instances. Web capabilities like
+[share target](https://w3c.github.io/web-share-target/),
+[file handlers](https://github.com/WICG/file-handling/blob/main/explainer.md)
+and [link capturing](https://github.com/WICG/pwa-url-handler/blob/main/handle_links/explainer.md)
+can cause new instances of the web app to be opened even if an app window is
+already open, putting the user in a non-ideal state.
+
+This document describes a new `launch_handler` manifest member that lets sites
+redirect app launches into existing app windows to prevent duplicate windows
+from being opened.
 
 We found that almost all "launch" use cases could be covered by a select few
 fixed rules (for example, "choose an existing window in the same app, focus it,
@@ -16,7 +25,7 @@ sites to specify a set of fixed rules without having to implement custom
 [service worker `launch`][sw-launch-explainer] event logic, which should satisfy
 most use cases, and simplify the implementation in browsers and sites.
 
-## Use cases
+## Use case
 
 - Single-window web apps: a web app that prefers to only have a single instance
   of itself open at any time, with new navigations focusing the existing
@@ -43,7 +52,7 @@ most use cases, and simplify the implementation in browsers and sites.
 
 - There are several ways for a web app window to be opened:
   - [File handling](https://github.com/WICG/file-handling/blob/main/explainer.md)
-  - [In scope link capturing](https://github.com/WICG/sw-launch/blob/master/declarative_link_capturing.md)
+  - [In scope link capturing](https://github.com/WICG/pwa-url-handler/blob/main/handle_links/explainer.md)
   - [Note taking](https://wicg.github.io/manifest-incubations/index.html#note_taking-member)
   - [Protocol handling](https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/main/URLProtocolHandler/explainer.md)
   - [Share target](https://w3c.github.io/web-share-target/)
@@ -65,7 +74,10 @@ most use cases, and simplify the implementation in browsers and sites.
 ### `LaunchQueue` and `LaunchParams` interfaces
 
 Add two new interfaces; `LaunchParams` and `LaunchQueue`. Add a global instance
-of `LaunchQueue` to the `window` object named `launchQueue`.
+of `LaunchQueue` to the `window` object named `launchQueue`. These serve as a
+JavaScript API to programmatically handle launches, in particular those that
+were redirected into an existing window without navigating the existing
+document.
 
 Whenever a web app is launched (via any launch trigger), a `LaunchParams` object
 will be enqueued in the `launchQueue` global `LaunchQueue` instance for the
@@ -266,5 +278,5 @@ This proposal is intended to work in tandem with tabbed mode web app windows.
 The behaviour of `"route_to": "new-client"` with an already open tabbed window
 is to open a new tab in that window.
 
-[sw-launch-explainer]: https://github.com/WICG/sw-launch/blob/main/explainer.md
-[dlc-explainer]: https://github.com/WICG/sw-launch/blob/main/declarative_link_capturing.md
+[sw-launch-explainer]: sw_launch_event.md
+[dlc-explainer]: declarative_link_capturing.md
