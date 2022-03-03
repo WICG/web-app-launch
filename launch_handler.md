@@ -3,7 +3,6 @@
 Authors: alancutter@, mgiuca@, dominickn@
 Last updated: 2021-07-09
 
-
 ## Overview
 
 This document describes a new `launch_handler` manifest member that enables
@@ -17,7 +16,6 @@ sites to specify a set of fixed rules without having to implement custom
 [service worker `launch`][sw-launch-explainer] event logic, which should satisfy
 most use cases, and simplify the implementation in browsers and sites.
 
-
 ## Use cases
 
 - Single-window web apps: a web app that prefers to only have a single instance
@@ -29,10 +27,9 @@ most use cases, and simplify the implementation in browsers and sites.
   - Apps that include multi-document management within a single instance
     (e.g., an HTML-implemented tab strip, floating sub-windows like Gmail).
 
-
 ## Non-goals
 
-- Forcing a web app to only ever appear in a single client (e.g. blocking being
+- Forcing a web app to only ever appear in a single client (e.g., blocking being
   opened in a browser tab while already opened in an app window).
 - Configuring whether link navigations into the scope of a web app launch the
   web app (this is out of scope and may be handled by a future version of the
@@ -42,18 +39,16 @@ most use cases, and simplify the implementation in browsers and sites.
   duplicate instances for it. This would instead by handled by the [service
   worker `launch` event][sw-launch-explainer].
 
-
-
 ## Background
 
 - There are several ways for a web app window to be opened:
   - [File handling](https://github.com/WICG/file-handling/blob/main/explainer.md)
   - [In scope link capturing](https://github.com/WICG/sw-launch/blob/master/declarative_link_capturing.md)
   - [Note taking](https://wicg.github.io/manifest-incubations/index.html#note_taking-member)
-  - Platform specific app launch surface
   - [Protocol handling](https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/main/URLProtocolHandler/explainer.md)
   - [Share target](https://w3c.github.io/web-share-target/)
   - [Shortcuts](https://www.w3.org/TR/appmanifest/#dfn-shortcuts)
+  - Platform specific app launch surface
 
   Web apps launched via these triggers will open in a new or existing app window
   depending on the user agent platform. There is currently no mechanism for the
@@ -65,27 +60,25 @@ most use cases, and simplify the implementation in browsers and sites.
   launch of a web app (via link capturing or any other means) may be configured
   by the manifest and service worker.
 
-
 ## Proposal
-
 
 ### `LaunchQueue` and `LaunchParams` interfaces
 
 Add two new interfaces; `LaunchParams` and `LaunchQueue`. Add a global instance
 of `LaunchQueue` to the `window` object named `launchQueue`.
 
-Whenever a web app is launched (via any launch trigger) a `LaunchParams` object
+Whenever a web app is launched (via any launch trigger), a `LaunchParams` object
 will be enqueued in the `launchQueue` global `LaunchQueue` instance for the
 browsing context that handled the launch. Scripts can provide a single
 `LaunchConsumer` function to receive enqueued `LaunchParams`.
 
-This functions similarly to an event listener but avoids the problem where
+This functions similarly to an event listener, but avoids the problem where
 scripts may "miss" events if they're too slow to register their event listeners,
 this problem is particularly pronounced for launch events as they occur
 during the page's initialization. `LaunchParams` are buffered indefinitely until
 they are consumed.
 
-```
+```idl
 [Exposed=Window] interface LaunchParams {
   readonly attribute DOMString? targetURL;
 };
@@ -102,7 +95,7 @@ partial interface Window {
 ```
 
 Example usage for a single-window music player app:
-```javascript
+```js
 launchQueue.setConsumer(launchParams => {
   const songID = extractSongId(launchParams.targetURL);
   if (songID) {
@@ -115,7 +108,7 @@ The `targetURL` member in `LaunchParams` will only be set if the launch did not
 create a new browsing context or navigate an existing one.
 
 Other web app APIs that involve launching may extend `LaunchParams` with
-additional members containing data specific to the method of launching e.g. a
+additional members containing data specific to the method of launching, e.g., a
 [share target](https://w3c.github.io/web-share-target/) payload.
 
 
@@ -124,6 +117,7 @@ additional members containing data specific to the method of launching e.g. a
 Add a `launch_handler` member to the web app manifest specifying the default
 client selection and navigation behaviour for web app launches.
 The shape of this member is as follows:
+
 ```
 "launch_handler": {
   "route_to": "new-client" | "existing-client" | "auto",
@@ -142,8 +136,8 @@ If unspecified then `launch_handler` defaults to
   launch is handled within that browsing context depends on
   `navigate_existing_client`.
 - `auto`: The behaviour is up to the user agent to decide what works best for
-  the platform. E.g. mobile devices only support single clients and would use
-  `existing-client` while desktop devices support multiple windows and would use
+  the platform. E.g., mobile devices only support single clients and would use
+  `existing-client`, while desktop devices support multiple windows and would use
   `new-client` to avoid data loss.
 
 `navigate_existing_client`:
@@ -157,13 +151,14 @@ Both `route_to` and `navigate_existing_client` also accept a list of values, the
 first valid value will be used. This is to allow new values to be added to
 the spec without breaking backwards compatibility with old implementations by
 using them.\
-For example if `"matching-url-client"` were added sites would specify
+For example, if `"matching-url-client"` were added, sites would specify
 `"route_to": ["matching-url-client", "existing-client"]` to continue
 to control the behaviour of older browsers that didn't support
 `"matching-url-client"`.
 
 Example manifest that choses to receive all app launches as events in existing
 web app windows:
+
 ```json
 {
   "name": "Example app",
@@ -174,7 +169,6 @@ web app windows:
   }
 }
 ```
-
 
 ## Possible extensions to this proposal
 
@@ -190,7 +184,7 @@ web app windows:
   `targetURL` set.
 
 - Add the `launch_handler` field to other launch methods to allow sites to
-  customise the launch behaviour for specfic launch methods. E.g.:
+  customise the launch behaviour for specfic launch methods. For example:
   ```json
   {
     "name": "Example app",
@@ -225,11 +219,9 @@ web app windows:
   }
   ```
   Or maybe the `LaunchQueue` interface should be `addConsumer`/`removeConsumer`
-  like `addEventListener`/`removeEventListener` but with buffering.
-
+  like `addEventListener`/`removeEventListener`, but with buffering.
 
 ## Related proposals
-
 
 ### [Service Worker launch event][sw-launch-explainer]
 
@@ -241,7 +233,6 @@ choose which client to focus).
 Use of `launch_handler` in the manifest would provide a "default" launch
 behaviour that the service worker `launch` event handler can choose to override.
 
-
 ### [Declarative Link Capturing][dlc-explainer]
 
 This `launch_handler` proposal is intended to be a successor to the "launch"
@@ -252,7 +243,6 @@ behaviour.
 actions; launch client selection and navigation, and explicitly decouples them
 from the "link capturing" launch trigger.
 
-
 ### [WICG: URL Handlers](https://github.com/WICG/pwa-url-handler/blob/master/explainer.md)
 
 Similarly to Declarative Link Capturing this `launch_handler` proposal refactors
@@ -260,24 +250,21 @@ out the "launch" component from the URL Handler proposal. `launch_handler`
 behaviour is intended for being "invoked" by URL Handlers at the point in which
 a web app has been chosen to handle an out-of-browser link navigation.
 
-
 ### [File Handling](https://github.com/WICG/file-handling/blob/main/explainer.md)
 
 This proposal takes `LaunchQueue` and `LaunchParams` from the File Handling
 proposal with a few changes:
 - Instead of enqueuing `LaunchParams` for specific types of launches they will
   be enqueued for every type of web app launch.
-- An optional targetURL field is added.
+- An optional `targetURL` field is added.
 - The interface is explicitly intended to be extended by other launch related
-  specs to contain launch specific data e.g. file handles or share data.
-
+  specs to contain launch specific data, e.g., file handles or share data.
 
 ### [Tabbed Application Mode](https://github.com/w3c/manifest/issues/737)
 
 This proposal is intended to work in tandem with tabbed mode web app windows.
 The behaviour of `"route_to": "new-client"` with an already open tabbed window
 is to open a new tab in that window.
-
 
 [sw-launch-explainer]: https://github.com/WICG/sw-launch/blob/main/explainer.md
 [dlc-explainer]: https://github.com/WICG/sw-launch/blob/main/declarative_link_capturing.md
