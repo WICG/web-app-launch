@@ -3,7 +3,12 @@ Author: Matt Giuca <mgiuca@>
 Input from: Alan Cutter <alancutter@>, Dominick Ng <dominickn@>
 
 Authored: 2020-05-25
-Updated: 2021-01-08
+Updated: 2022-03-03
+
+## Obsolete
+
+This API proposal is obsolete in favor of [`launch_handler`](launch_handler.md).
+Context: https://docs.google.com/document/d/1w9qHqVJmZfO07kbiRMd9lDQMW15DeK5o-p-rZyL7twk
 
 ## Overview
 
