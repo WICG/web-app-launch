@@ -120,37 +120,30 @@ The shape of this member is as follows:
 
 ```
 "launch_handler": {
-  "route_to": "new-client" | "existing-client" | "auto",
-  "navigate_existing_client": "always" | "never"
+  "route_to": "auto" | "new-client" | "existing-client-navigate" | "existing-client-retain"
 }
 ```
 
 If unspecified then `launch_handler` defaults to
-`{"route_to": "auto", "navigate_existing_client": "always"}`.
+`{ "route_to": "auto" }`.
 
 `route_to`:
-- `new-client`: A new browsing context is created in a web app window to load
-  the launch's target URL.
-- `existing-client`: The most recently interacted with browsing context in a web
-  app window for the app being launched is chosen to handle the launch. How the
-  launch is handled within that browsing context depends on
-  `navigate_existing_client`.
 - `auto`: The behaviour is up to the user agent to decide what works best for
   the platform. E.g., mobile devices only support single clients and would use
-  `existing-client`, while desktop devices support multiple windows and would use
-  `new-client` to avoid data loss.
+  `existing-client-navigate`, while desktop devices support multiple windows and
+  would use `new-client` to avoid data loss.
+- `new-client`: A new browsing context is created in a web app window to load
+  the launch's target URL.
+- `existing-client-navigate`: The most recently interacted with browsing context
+  in a web app window is navigated to the launch's target URL.
+- `existing-client-retain`: The most recently interacted with browsing context
+  in a web app window is chosen to handle the launch. A new `LaunchParams` with
+  its `targetURL` set to the launch URL will be enqueued in the document's
+  `window.launchQueue`.
 
-`navigate_existing_client`:
-- `always`: existing browsing contexts chosen for launch will navigate the
-  browsing context to the launch's target URL.
-- `never`: existing browsing contexts chosen for launch will not be navigated
-  and instead have `targetURL` in the enqueued `LaunchParams` set to the
-  launch's target URL.
-
-Both `route_to` and `navigate_existing_client` also accept a list of values, the
-first valid value will be used. This is to allow new values to be added to
-the spec without breaking backwards compatibility with old implementations by
-using them.\
+`route_to` accepts a list of values, the first valid value will be used. This is
+to allow new values to be added to the spec without breaking backwards
+compatibility with old implementations by using them.\
 For example, if `"matching-url-client"` were added, sites would specify
 `"route_to": ["matching-url-client", "existing-client"]` to continue
 to control the behaviour of older browsers that didn't support
@@ -164,8 +157,7 @@ web app windows:
   "name": "Example app",
   "start_url": "/index.html",
   "launch_handler": {
-    "route_to": "existing",
-    "navigate_existing_client": "never"
+    "route_to": "existing-client-retain"
   }
 }
 ```
@@ -190,8 +182,7 @@ web app windows:
     "name": "Example app",
     "description": "This app will navigate existing clients unless it was launched via the share target API.",
     "launch_handler": {
-      "route_to": "existing",
-      "navigate_existing_client": true
+      "route_to": "existing-client-navigate"
     },
     "share_target": {
       "action": "share.html",
@@ -201,7 +192,7 @@ web app windows:
         "url": "link"
       },
       "launch_handler": {
-        "navigate_existing_client": false
+        "route_to": "existing-client-retain"
       }
     }
   }
