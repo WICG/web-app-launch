@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>
+      Web App Launch Handler API
+    </title>
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="remove"
+    defer></script>
+    <script class='remove'>
+      var respecConfig = {
+        specStatus: "unofficial",
+        github: {
+          repoURL: "WICG/sw-launch",
+          branch: "main"
+        },
+        group: "webapps",
+        editors: [{
+          name: "Alan Cutter",
+          company: "Google Inc.",
+          companyURL: "https://google.com",
+          w3cid: 110742
+        }],
+        xref: "web-platform",
+        // To add eventually:
+        //  - mdn: true
+        //  - caniuse: "web-app-launch-handler"
+      };
+    </script>
+  </head>
+  <body data-cite="Web-Share encoding">
+    <section id="abstract">
+      <p>
+        This specification defines an API that allows web applications to
+        configure the behaviour of app launches with respect to already open app
+        instances. This API aims to cater to the needs of single instance web
+        apps e.g. music players.
+      </p>
+    </section>
+    <section id="sotd">
+      <p>
+        This is an early draft of the Web App Launch Handler API.
+      </p>
+    </section>
+    <section>
+      <h2>
+        Prerequisites
+      </h2>
+      <p>
+        In order to implement this API, a the user agent MUST support
+        [[[appmanifest]]] and MUST support multiple simultaneous app instances.
+      </p>
+    </section>
+    <section class="informative" data-link-for="WebAppManifest">
+      <h2>
+        Usage Example
+      </h2>
+      <p>
+        A music player app wants to direct app shortcut launches to an existing
+        window without interrupting music playback. This music app would add a
+        {{launch_handler}} entry to the [[[appmanifest]]], as shown:
+      </p>
+      <pre class="example json" title="manifest.webmanifest">
+      {
+        "name": "Music Player",
+        "shortcuts": [{
+          "name": "Now Playing",
+          "url": "/"
+        }, {
+          "name": "Library",
+          "url": "/library"
+        }, {
+          "name": "Favorites",
+          "url": "/favorites"
+        }, {
+          "name": "Discover",
+          "url": "/discover"
+        }],
+        "launch_handler": {
+          "route_to": "existing-client-retain"
+        }
+      }
+      </pre>
+      <p>
+        With the <a data-cite="LaunchHandler.route_to">route_to</a> parameter
+        set to "existing-client-retain" causes app launches to bring existing
+        app instances (if any) into focus without navigating them away from
+        their current document.
+      </p>
+      <p>
+        A {{LaunchParams}} will be enqueued on the {{window.launchQueue}} where
+        the music player can read the {{targetURL}} in its {{LaunchConsumer}}
+        and handle it in script e.g.:
+      </p>
+      <pre class="example javascript" title="page.js">
+        window.launchQueue.addConsumer((launchParams) => {
+          const url = launchParams.targetURL;
+          // If the URL is to one of the app sections, updates the app view to
+          // that section without interrupting currently playing music.
+          if (maybeFocusAppSection(url)) {
+            return;
+          }
+          location.href = url;
+        });
+      </pre>
+      <p>
+        A user, already using the music player app to listen to music,
+        activating the "Library" app shortcut will trigger an app launch to
+        /library which gets routed to the existing app instance, enqueued in the
+        page's {{window.launchQueue}} which, through the assigned
+        {{LaunchConsumer}}, brings the library section of the music player into
+        focus without affecting the current music playback.
+      </p>
+    </section>
+    <section data-link-for="WebAppManifest">
+      <h2>
+        Extension to the Web App Manifest
+      </h2>
+      <section>
+        <h3>
+          Processing the `launch_handler` member
+        </h3>
+        <p>
+          To <dfn>process the `launch_handler` member</dfn>, given
+          [=ordered map=] |json:ordered map|, [=ordered map=] |manifest:ordered map|, run the following during the <a data-cite=
+          "appmanifest#dfn-processing-extension-point-of-web-manifest">extension
+          point</a> in [=processing a manifest=]:
+        </p>
+        <ol class="algorithm">
+          <li>If |json|["launch_handler"] does not [=map/exist=], return.
+          </li>
+          <li>If the type of |json|["launch_handler"] is not [=ordered map=],
+          return.
+          </li>
+          <li>Set |manifest|["launch_handler"] to a new [=ordered map=].
+          </li>
+          <li>[=process the `route_to` member=] passing
+          |json|["launch_handler"], |manifest|["launch_handler"].
+          </li>
+        </ol>
+      </section>
+      <section>
+        <h3>
+          Processing the `route_to` member
+        </h3>
+        <p>
+          To <dfn>process the `route_to` member</dfn>, given [=ordered
+          map=] |json_launch_handler:ordered map|, [=ordered map=]
+          |manifest_launch_handler:ordered map|, [=URL=] |manifest_URL:URL|, run
+          the following:
+        </p>
+        <ol class="algorithm">
+          <li>If |json_launch_handler|["route_to"] does not [=map/exist=],
+          return.
+          </li>
+          <li>If the type of |json_launch_handler|["route_to"] is not
+          [=string=], return.
+          </li>
+          <li>If [=route to list=] does not contain |json_launch_handler|["route_to"], return.
+          </li>
+          <li>Set manifest_launch_handler["route_to"] to |json_launch_handler|["route_to"].
+          </li>
+        </ol>
+      </section>
+      <section>
+        <h3>
+          Launching the `route_to`
+        </h3>
+        <p>
+          To <dfn>launch the `new_note_url`</dfn>, given <a data-cite=
+          "appmanifest#dfn-processed-manifest">processed manifest</a>
+          |manifest:processed manifest|, run the following steps:
+        </p>
+        <ol>
+          <li>If |manifest|["note_taking"] does not [=map/exist=], return.
+          </li>
+          <li>If |manifest|["note_taking"]["new_note_url"] does not
+          [=map/exist=], return.
+          </li>
+          <li>If the type of |manifest|["note_taking"]["new_note_url"] is not
+          [=URL=], return.
+          </li>
+          <li>Let |browsing context:Browsing Context| be the result of creating
+          a new [=top-level browsing context=].
+          </li>
+          <li>[=Navigate=] |browsing context| to resource
+          |manifest|["note_taking"]["new_note_url"].
+          </li>
+        </ol>
+      </section>
+    </section>
+
+
+
+
+
+
+
+
+
+
+
+
+    <section>
+      <h2>
+        Registration of web share targets
+      </h2>
+      <p>
+        How and when <a>web share targets</a> are "registered" is at the
+        discretion of the user agent and/or the end user. In fact,
+        "registration" is a user-agent-specific concept that is not formally
+        defined here; user agents are NOT REQUIRED to "register" web share
+        targets at all; they are only REQUIRED to provide some mechanism to
+        convey shared data to a web share target of the end user's choosing.
+        User agents MAY consider a web share target "registered" even if it is
+        not <a data-cite="appmanifest#dfn-install">installed</a>.
+      </p>
+      <p>
+        The user agent MAY automatically register all <a>web share targets</a>
+        as the user visits the site, but it is RECOMMENDED that more discretion
+        is applied, to avoid overwhelming the user with the choice of a large
+        number of targets.
+      </p>
+      <div class="note">
+        <p>
+          Examples of registration strategies that user agents can employ are:
+        </p>
+        <ul>
+          <li>Only register a web share target once it is <a data-cite=
+          "appmanifest#dfn-install">installed</a>.
+          </li>
+          <li>Only register a web share target once the end user has used the
+          site for some period of time.
+          </li>
+          <li>Explicitly prompt the user to register a web share target
+          (perhaps using the same UI as
+          {{NavigatorContentUtils/registerProtocolHandler()}}).
+          </li>
+          <li>Only register a web share target if it has a service worker.
+          </li>
+        </ul>
+      </div>
+      <p>
+        When presenting the end user with a list of <a>web share targets</a>,
+        the user agent MAY use an online service which has pre-indexed
+        manifests, and therefore show the user targets that they have never
+        visited or explicitly registered.
+      </p>
+      <div class="issue" data-number="26"></div>
+    </section>
+    <section>
+      <h2>
+        Handling incoming shares
+      </h2>
+      <p>
+        A <a>web share target</a> is <dfn data-lt=
+        "invoke|invocation">invoked</dfn> when the end user is sharing some
+        data intended for a generic application, and indicates that specific
+        web share target as the receiver of the data.
+      </p>
+      <p>
+        It is not specified where the data comes from, or how the end user
+        indicates the web share target as the receiver. However, one possible
+        source is a call to {{Navigator}}'s {{Navigator/share()}} method in the
+        same user agent.
+      </p>
+      <div class="note">
+        <p>
+          Examples of other possible sources of a <a>web share target</a>
+          invocation are:
+        </p>
+        <ul>
+          <li>From the built-in UI of the user agent (<i>e.g.</i>, the end user
+          picks "Share" from a browser's menu, to share the current page title
+          as "<code>title</code>" and the current page URL as
+          "<code>url</code>").
+          </li>
+          <li>A share action triggered from a native application (via a
+          proprietary share system), followed by the end user choosing a web
+          share target as the receiver.
+          </li>
+        </ul>
+      </div>
+      <section>
+        <h3>
+          Obtaining a <code>ShareData</code>
+        </h3>
+        <p>
+          When a <a>web share target</a> is <a>invoked</a>, the data MAY be in
+          an unspecified format. The user agent MUST first convert the data
+          into a {{ShareData}} dictionary, if it is not already, by mapping to
+          the fields of <code>ShareData</code> from equivalent concepts in the
+          host system. If the source was a call to {{Navigator/share()}}, the
+          user agent SHOULD use the {{ShareData}} argument unmodified (but this
+          is not always possible, as it might have to round-trip through some
+          other format in a lossy manner). The user agent MAY employ heuristics
+          to map the data onto the <code>ShareData</code> fields as well as
+          possible.
+        </p>
+        <p class="note">
+          For example, the host share system may not have a dedicated URL
+          field, but a convention that both plain text and URLs are sometimes
+          transmitted in a "text" field. This is the case on Android. The user
+          agent can check whether all or part of the "text" field is a [=valid
+          URL string=], and if so, move that part of the "text" field to the
+          {{ShareData}}'s {{ShareData/url}} member.
+        </p>
+      </section>
+      <section data-link-for="WebAppManifest">
+        <h3>
+          Launching the web share target
+        </h3>
+        <p>
+          When <a>web share target</a> having <a>WebAppManifest</a>
+          <var>manifest</var> is <a>invoked</a> with {{ShareData}}
+          <var>data</var>, run the following steps:
+        </p>
+        <ol>
+          <li>Let <var>url</var> be a copy of
+          <var>manifest</var>["<a>share_target</a>"]["<a data-link-for=
+          "ShareTarget">action</a>"].
+          </li>
+          <li>Let <var>entry list</var> be a new empty list of name-value
+          tuples.
+          </li>
+          <li>For each <var>member</var> in the sequence «
+          <code>"title"</code>, <code>"text"</code>, <code>"url"</code> »,
+            <ol>
+              <li>Let <var>name</var> be the value of
+              <var>manifest</var>["<a>share_target</a>"]["<a data-link-for=
+              "ShareTarget">params</a>"][<var>member</var>].
+              </li>
+              <li>If <var>name</var> is <code>undefined</code> or an empty
+              string, then continue.
+              </li>
+              <li>Let <var>value</var> be the value of
+              <var>data</var>[<var>member</var>].
+              </li>
+              <li>If <var>value</var> is <code>undefined</code>, then continue.
+              </li>
+              <li>
+                <a data-cite="INFRA#list-append">Append</a> to <var>entry
+                list</var> a tuple with <var>name</var> and <var>value</var>.
+              </li>
+            </ol>
+          </li>
+          <li>Let <var>header list</var> be a new empty <a data-cite=
+          "!FETCH/#concept-header-list">header list</a>.
+          </li>
+          <li>Let <var>method</var> be
+          <var>manifest</var>["<a>share_target</a>"]["<a data-link-for=
+          "ShareTarget">method</a>"].
+          </li>
+          <li>Let <var>enctype</var> be
+          <var>manifest</var>["<a>share_target</a>"]["<a data-link-for=
+          "ShareTarget">enctype</a>"].
+          </li>
+          <li>If <var>method</var> is <code>"GET"</code>:
+            <ol>
+              <li>Let <var>query</var> be the result of running the
+              [=urlencoded serializer=] with <var>entry list</var> and no
+              encoding override.
+              </li>
+              <li>Set <var>url</var>'s <a data-cite=
+              "!URL#concept-url-query">query</a> component to <var>query</var>.
+              </li>
+              <li>Let <var>body</var> be null.
+              </li>
+            </ol>
+          </li>
+          <li>Otherwise, if <var>method</var> is <code>"POST"</code> and <var>
+            enctype</var> is <code>"application/x-www-form-urlencoded"</code>:
+            <ol>
+              <li>Let <var>body</var> be the result of running the [=urlencoded
+              serializer=] with <var>entry list</var> and no encoding override.
+              </li>
+              <li>Set <var>body</var> to the result of [=UTF-8 encode=]
+              <var>body</var>.
+              </li>
+              <li>[=header list/Append=]
+              <code>"Content-Type"</code>/<code>"application/x-www-form-urlencoded"</code>
+              to <var>header list</var>.
+              </li>
+            </ol>
+          </li>
+          <li>Otherwise, if <var>method</var> is <code>"POST"</code> and <var>
+            enctype</var> is <code>"multipart/form-data"</code>:
+            <ol>
+              <li>Let <var>body</var> be the result of running the
+              <a>multipart/form-data encoding algorithm</a> with <var>entry
+              list</var> and the [=UTF-8=] encoding.
+              </li>
+              <li>Let <var>MIME type</var> be the concatenation of the string
+              <code>"multipart/form-data;"</code>, a U+0020 SPACE character,
+              the string <code>"boundary="</code>, and the <a data-cite=
+              "!HTML#multipart/form-data-boundary-string"><code>multipart/form-data</code>
+              boundary string</a> generated by the <a data-cite=
+              "!HTML#multipart/form-data-encoding-algorithm"><code>multipart/form-data</code>
+              encoding algorithm</a>.
+              </li>
+              <li>[=header list/Append=] <code>"Content-Type"</code>/<var>MIME
+              type</var> to <var>header list</var>.
+              </li>
+            </ol>
+          </li>
+          <li>Let <var>browsing context</var> be the result of creating a
+          <a data-cite="HTML#creating-a-new-browsing-context">new</a>
+          <a data-cite="HTML#top-level-browsing-context">top-level browsing
+          context</a>.
+          </li>
+          <li>
+            <a data-cite="HTML#navigate">Navigate</a> <var>browsing
+            context</var> to a new <a data-cite=
+            "!FETCH/#concept-request">Request</a> whose method is
+            <var>method</var>, url is <var>url</var>, header list is
+            <var>header list</var>, and body is <var>body</var>.
+          </li>
+        </ol>
+        <p class="note">
+          This algorithm assumes that <var>manifest</var> has had the
+          <a>post-processing the <code>share_target</code> member</a> algorithm
+          run on it and still has a <a>share_target</a> afterwards.
+        </p>
+      </section>
+    </section>
+    <section class="informative" data-cite="secure-contexts">
+      <h2>
+        Accessibility
+      </h2>
+      <p>
+        This specification has no known accessibility considerations.
+      </p>
+    </section>
+    <section class="informative" data-cite="secure-contexts">
+      <h2>
+        Security and privacy considerations
+      </h2>
+      <ul>
+        <li>Invoking a <a>web share target</a> means potentially sending
+        private user data to a third-party website. Implementors are to take
+        every precaution that the user understands which party the data is
+        being sent to (<i>e.g.</i>, communicating the web share target's
+        origin), before running the <a>invocation</a> algorithm.
+        </li>
+        <li>Of particular concern is spoofing: a web share target presenting
+        itself as a different party (by setting its name and icon accordingly).
+        </li>
+        <li>The spoofing risk is heightened if web share targets are chosen
+        from an online index, rather than a set of targets that the end user
+        has explicitly installed or registered.
+        </li>
+        <li>The requirement that the web share target's origin be a
+        [=potentially trustworthy origin=] is to prevent private user data from
+        being transmitted to a party that does not control the origin in
+        question, or in clear text over the network.
+        </li>
+        <li>A source site using Web Share API, and a receipient site using Web
+        Share Target, could cooperate to join user ids. The source site could
+        use `navigator.share(text: my_id_for_this_user)`, and the (user-chosen)
+        recipient could use that information to join its own user ID with the
+        source origin's user ID. Both sides of the transfer would need to write
+        code to accomplish the transfer, and the user would need to pick the
+        recipient.
+        </li>
+      </ul>
+    </section>
+    <section id="conformance"></section>
+    <section class="appendix informative">
+      <h2>
+        Acknowledgments
+      </h2>
+      <p>
+        Thanks to the [[[WEBINTENTS]]] team, who laid the groundwork for the
+        web app interoperability use cases. In particular, <a href=
+        "https://paul.kinlan.me/">Paul Kinlan</a>, who did a lot of early
+        advocacy for Web Share and Web Share Target.
+      </p>
+      <p>
+        Thanks to Connie Pyromallis, who wrote an early draft of this spec, and
+        helped design and prototype the API.
+      </p>
+      <p>
+        Thanks to Alex Russell and David Baron, for their feedback on early
+        drafts of this spec.
+      </p>
+    </section>
+  </body>
+</html>
