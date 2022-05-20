@@ -21,7 +21,9 @@
           companyURL: "https://google.com",
           w3cid: 110742
         }],
-        xref: "web-platform",
+        xref: {
+          specs: ["web-platform", "file-system-access"]
+        }
         // To add eventually:
         //  - mdn: true
         //  - caniuse: "web-app-launch-handler"
@@ -116,15 +118,46 @@
       <h2>
         Extension to the Web App Manifest
       </h2>
+      <p>
+        The following steps are added to the <a data-cite=
+        "!appmanifest#dfn-extension-point">extension point</a> in the steps for
+        <a data-cite="appmanifest#dfn-processing-a-manifest">processing a
+        manifest</a>:
+      </p>
+      <ol>
+        <li>Run the steps for <a>processing the <code>launch_handler</code> member</a>
+        given [=ordered map=] |json:ordered map| and [=ordered map=]
+        |manifest:ordered map|.
+        </li>
+      </ol>
+      <pre class="warning">
+        WIP Notes
+
+        Spec skeleton:
+          Use case example with code:
+            Music player.
+          Extend manifest extension point:
+            Process launch_handler field.
+            Process inner route_to field
+          IDLs:
+            LaunchParams IDL:
+              Note extensibility design; for members other than targetURL at
+              most one will not be undefined depending on the type of launch.
+            LaunchQueue IDL.
+              Note why not events.
+            window.launchQueue IDL.
+          Define launch process:
+            Define launch routing selection process:
+              Define route_to values and their meanings.
+      </pre>
       <section>
         <h3>
           Processing the `launch_handler` member
         </h3>
         <p>
-          To <dfn>process the `launch_handler` member</dfn>, given
-          [=ordered map=] |json:ordered map|, [=ordered map=] |manifest:ordered map|, run the following during the <a data-cite=
-          "appmanifest#dfn-processing-extension-point-of-web-manifest">extension
-          point</a> in [=processing a manifest=]:
+          The steps for <dfn>processing the `launch_handler` member</dfn>, given
+          [=ordered map=] |json:ordered map|, [=ordered map=]
+          |manifest:ordered map|, are as follows:
         </p>
         <ol class="algorithm">
           <li>If |json|["launch_handler"] does not [=map/exist=], return.
@@ -134,7 +167,7 @@
           </li>
           <li>Set |manifest|["launch_handler"] to a new [=ordered map=].
           </li>
-          <li>[=process the `route_to` member=] passing
+          <li>[=Process the `route_to` member=] passing
           |json|["launch_handler"], |manifest|["launch_handler"].
           </li>
         </ol>
@@ -162,265 +195,123 @@
           </li>
         </ol>
       </section>
-      <section>
-        <h3>
-          Launching the `route_to`
-        </h3>
-        <p>
-          To <dfn>launch the `new_note_url`</dfn>, given <a data-cite=
-          "appmanifest#dfn-processed-manifest">processed manifest</a>
-          |manifest:processed manifest|, run the following steps:
-        </p>
-        <ol>
-          <li>If |manifest|["note_taking"] does not [=map/exist=], return.
-          </li>
-          <li>If |manifest|["note_taking"]["new_note_url"] does not
-          [=map/exist=], return.
-          </li>
-          <li>If the type of |manifest|["note_taking"]["new_note_url"] is not
-          [=URL=], return.
-          </li>
-          <li>Let |browsing context:Browsing Context| be the result of creating
-          a new [=top-level browsing context=].
-          </li>
-          <li>[=Navigate=] |browsing context| to resource
-          |manifest|["note_taking"]["new_note_url"].
-          </li>
-        </ol>
-      </section>
-    </section>
-
-
-
-
-
-
-
-
-
-
-
-
-    <section>
-      <h2>
-        Registration of web share targets
-      </h2>
-      <p>
-        How and when <a>web share targets</a> are "registered" is at the
-        discretion of the user agent and/or the end user. In fact,
-        "registration" is a user-agent-specific concept that is not formally
-        defined here; user agents are NOT REQUIRED to "register" web share
-        targets at all; they are only REQUIRED to provide some mechanism to
-        convey shared data to a web share target of the end user's choosing.
-        User agents MAY consider a web share target "registered" even if it is
-        not <a data-cite="appmanifest#dfn-install">installed</a>.
-      </p>
-      <p>
-        The user agent MAY automatically register all <a>web share targets</a>
-        as the user visits the site, but it is RECOMMENDED that more discretion
-        is applied, to avoid overwhelming the user with the choice of a large
-        number of targets.
-      </p>
-      <div class="note">
-        <p>
-          Examples of registration strategies that user agents can employ are:
-        </p>
-        <ul>
-          <li>Only register a web share target once it is <a data-cite=
-          "appmanifest#dfn-install">installed</a>.
-          </li>
-          <li>Only register a web share target once the end user has used the
-          site for some period of time.
-          </li>
-          <li>Explicitly prompt the user to register a web share target
-          (perhaps using the same UI as
-          {{NavigatorContentUtils/registerProtocolHandler()}}).
-          </li>
-          <li>Only register a web share target if it has a service worker.
-          </li>
-        </ul>
-      </div>
-      <p>
-        When presenting the end user with a list of <a>web share targets</a>,
-        the user agent MAY use an online service which has pre-indexed
-        manifests, and therefore show the user targets that they have never
-        visited or explicitly registered.
-      </p>
-      <div class="issue" data-number="26"></div>
     </section>
     <section>
       <h2>
-        Handling incoming shares
+        Handling app launches in script
       </h2>
-      <p>
-        A <a>web share target</a> is <dfn data-lt=
-        "invoke|invocation">invoked</dfn> when the end user is sharing some
-        data intended for a generic application, and indicates that specific
-        web share target as the receiver of the data.
-      </p>
-      <p>
-        It is not specified where the data comes from, or how the end user
-        indicates the web share target as the receiver. However, one possible
-        source is a call to {{Navigator}}'s {{Navigator/share()}} method in the
-        same user agent.
-      </p>
-      <div class="note">
-        <p>
-          Examples of other possible sources of a <a>web share target</a>
-          invocation are:
-        </p>
-        <ul>
-          <li>From the built-in UI of the user agent (<i>e.g.</i>, the end user
-          picks "Share" from a browser's menu, to share the current page title
-          as "<code>title</code>" and the current page URL as
-          "<code>url</code>").
-          </li>
-          <li>A share action triggered from a native application (via a
-          proprietary share system), followed by the end user choosing a web
-          share target as the receiver.
-          </li>
-        </ul>
-      </div>
-      <section>
+      <section data-dfn-for="LaunchParams">
         <h3>
-          Obtaining a <code>ShareData</code>
+          <dfn>LaunchParams</dfn> interface
         </h3>
+        <ul class="issue">
+          <li>This has been copied directly from <a href="https://wicg.github.io/manifest-incubations/index.html#launch-queue-and-launch-params">Manifest Incubations</a> without modification, this launch_handler spec will be its new home soon.</li>
+          <li>LaunchParams should be a dictionary.</li>
+          <li>targetURL should not be nullable.</li>
+          <li>files should be optional</li>
+        </ul>
+        <pre class="idl">
+          [Exposed=Window] interface LaunchParams {
+            readonly attribute DOMString? targetURL;
+            readonly attribute FrozenArray&lt;FileSystemHandle&gt; files;
+          };
+        </pre>
         <p>
-          When a <a>web share target</a> is <a>invoked</a>, the data MAY be in
-          an unspecified format. The user agent MUST first convert the data
-          into a {{ShareData}} dictionary, if it is not already, by mapping to
-          the fields of <code>ShareData</code> from equivalent concepts in the
-          host system. If the source was a call to {{Navigator/share()}}, the
-          user agent SHOULD use the {{ShareData}} argument unmodified (but this
-          is not always possible, as it might have to round-trip through some
-          other format in a lossy manner). The user agent MAY employ heuristics
-          to map the data onto the <code>ShareData</code> fields as well as
-          possible.
+          {{LaunchParams/targetURL}} represents the [=URL=] of the launch which
+          MUST be [=manifest/within scope=] of the application.
         </p>
-        <p class="note">
-          For example, the host share system may not have a dedicated URL
-          field, but a convention that both plain text and URLs are sometimes
-          transmitted in a "text" field. This is the case on Android. The user
-          agent can check whether all or part of the "text" field is a [=valid
-          URL string=], and if so, move that part of the "text" field to the
-          {{ShareData}}'s {{ShareData/url}} member.
+        <p>
+          For every |file handle:FileSystemHandle| in {{LaunchParams/files}},
+          querying the file system permission with
+          {{FileSystemPermissionDescriptor/mode}} set to
+          {{FileSystemPermissionMode/"readwrite"}} MUST return
+          {{PermissionState/"granted"}}.
         </p>
       </section>
-      <section data-link-for="WebAppManifest">
+      <section data-dfn-for="LaunchConsumer">
         <h3>
-          Launching the web share target
+          <dfn>LaunchConsumer</dfn> function
+        </h3>
+        <pre class="idl">
+          callback LaunchConsumer = any (LaunchParams params);
+        </pre>
+      </section>
+      <section data-dfn-for="LaunchQueue">
+        <h3>
+          <dfn>LaunchQueue</dfn> interface
+        </h3>
+        <pre class="idl">
+          partial interface Window {
+            readonly attribute LaunchQueue launchQueue;
+          };
+
+          [Exposed=Window] interface LaunchQueue {
+            undefined setConsumer(LaunchConsumer consumer);
+          };
+        </pre>
+        <p>
+          {{LaunchQueue}} has an <dfn>unconsumed launch params</dfn> which is a
+          [=list=] of {{LaunchParams}} that is initially empty.
+        </p>
+        <p>
+          {{LaunchQueue}} has an <dfn>assigned launch consumer</dfn> which is
+          initially null.
+        </p>
+        <section>
+          <h2>
+            <dfn>setConsumer</dfn> method
+          </h2>
+          <p>
+            The {{LaunchQueue/setConsumer(consumer)}} method steps are:
+          </p>
+          <ol class="algorithm">
+            <li>Set the [=assigned launch consumer=] to |consumer|.
+            </li>
+            <li>[=list/For each=] |launch_params:LaunchParams| of [=unconsumed
+            launch params=]:
+              <ol>
+                <li>Invoke |consumer| with |launch_params|.
+                </li>
+              </ol>
+            </li>
+            <li>Set [=unconsumed launch params=] to the empty [=list=].
+            </li>
+          </ol>
+        </section>
+      </section>
+      <section>
+        <h3>
+          Handling Web App Launches
         </h3>
         <p>
-          When <a>web share target</a> having <a>WebAppManifest</a>
-          <var>manifest</var> is <a>invoked</a> with {{ShareData}}
-          <var>data</var>, run the following steps:
+          The steps to <dfn>launch a web app</dfn> are given by the following
+          algorithm. The algorithm takes {{LaunchParams}}
+          |params:LaunchParams|.
         </p>
-        <ol>
-          <li>Let <var>url</var> be a copy of
-          <var>manifest</var>["<a>share_target</a>"]["<a data-link-for=
-          "ShareTarget">action</a>"].
+        <ol class="algorithm">
+          <li>If |params| is null, set |params| to a new {{LaunchParams}} with
+          {{LaunchParams/targetURL}} set to [=manifest/start_url=].
           </li>
-          <li>Let <var>entry list</var> be a new empty list of name-value
-          tuples.
+          <li>Create a new top level browsing context and navigate it to
+          |params.targetUrl|.
           </li>
-          <li>For each <var>member</var> in the sequence «
-          <code>"title"</code>, <code>"text"</code>, <code>"url"</code> »,
+          <li>Append |params| to the [=unconsumed launch params=] of the
+          launched document's {{Window.LaunchQueue}}.
+          </li>
+          <li>If the [=assigned launch consumer=] |consumer| is set:
             <ol>
-              <li>Let <var>name</var> be the value of
-              <var>manifest</var>["<a>share_target</a>"]["<a data-link-for=
-              "ShareTarget">params</a>"][<var>member</var>].
+              <li>[=list/For each=] |launch_params:LaunchParams| of
+              [=unconsumed launch params=]:
+                <ol>
+                  <li>Invoke |consumer| with |launch_params|.
+                  </li>
+                </ol>
               </li>
-              <li>If <var>name</var> is <code>undefined</code> or an empty
-              string, then continue.
-              </li>
-              <li>Let <var>value</var> be the value of
-              <var>data</var>[<var>member</var>].
-              </li>
-              <li>If <var>value</var> is <code>undefined</code>, then continue.
-              </li>
-              <li>
-                <a data-cite="INFRA#list-append">Append</a> to <var>entry
-                list</var> a tuple with <var>name</var> and <var>value</var>.
+              <li>Set [=unconsumed launch params=] to the empty list.
               </li>
             </ol>
-          </li>
-          <li>Let <var>header list</var> be a new empty <a data-cite=
-          "!FETCH/#concept-header-list">header list</a>.
-          </li>
-          <li>Let <var>method</var> be
-          <var>manifest</var>["<a>share_target</a>"]["<a data-link-for=
-          "ShareTarget">method</a>"].
-          </li>
-          <li>Let <var>enctype</var> be
-          <var>manifest</var>["<a>share_target</a>"]["<a data-link-for=
-          "ShareTarget">enctype</a>"].
-          </li>
-          <li>If <var>method</var> is <code>"GET"</code>:
-            <ol>
-              <li>Let <var>query</var> be the result of running the
-              [=urlencoded serializer=] with <var>entry list</var> and no
-              encoding override.
-              </li>
-              <li>Set <var>url</var>'s <a data-cite=
-              "!URL#concept-url-query">query</a> component to <var>query</var>.
-              </li>
-              <li>Let <var>body</var> be null.
-              </li>
-            </ol>
-          </li>
-          <li>Otherwise, if <var>method</var> is <code>"POST"</code> and <var>
-            enctype</var> is <code>"application/x-www-form-urlencoded"</code>:
-            <ol>
-              <li>Let <var>body</var> be the result of running the [=urlencoded
-              serializer=] with <var>entry list</var> and no encoding override.
-              </li>
-              <li>Set <var>body</var> to the result of [=UTF-8 encode=]
-              <var>body</var>.
-              </li>
-              <li>[=header list/Append=]
-              <code>"Content-Type"</code>/<code>"application/x-www-form-urlencoded"</code>
-              to <var>header list</var>.
-              </li>
-            </ol>
-          </li>
-          <li>Otherwise, if <var>method</var> is <code>"POST"</code> and <var>
-            enctype</var> is <code>"multipart/form-data"</code>:
-            <ol>
-              <li>Let <var>body</var> be the result of running the
-              <a>multipart/form-data encoding algorithm</a> with <var>entry
-              list</var> and the [=UTF-8=] encoding.
-              </li>
-              <li>Let <var>MIME type</var> be the concatenation of the string
-              <code>"multipart/form-data;"</code>, a U+0020 SPACE character,
-              the string <code>"boundary="</code>, and the <a data-cite=
-              "!HTML#multipart/form-data-boundary-string"><code>multipart/form-data</code>
-              boundary string</a> generated by the <a data-cite=
-              "!HTML#multipart/form-data-encoding-algorithm"><code>multipart/form-data</code>
-              encoding algorithm</a>.
-              </li>
-              <li>[=header list/Append=] <code>"Content-Type"</code>/<var>MIME
-              type</var> to <var>header list</var>.
-              </li>
-            </ol>
-          </li>
-          <li>Let <var>browsing context</var> be the result of creating a
-          <a data-cite="HTML#creating-a-new-browsing-context">new</a>
-          <a data-cite="HTML#top-level-browsing-context">top-level browsing
-          context</a>.
-          </li>
-          <li>
-            <a data-cite="HTML#navigate">Navigate</a> <var>browsing
-            context</var> to a new <a data-cite=
-            "!FETCH/#concept-request">Request</a> whose method is
-            <var>method</var>, url is <var>url</var>, header list is
-            <var>header list</var>, and body is <var>body</var>.
           </li>
         </ol>
-        <p class="note">
-          This algorithm assumes that <var>manifest</var> has had the
-          <a>post-processing the <code>share_target</code> member</a> algorithm
-          run on it and still has a <a>share_target</a> afterwards.
-        </p>
       </section>
     </section>
     <section class="informative" data-cite="secure-contexts">
