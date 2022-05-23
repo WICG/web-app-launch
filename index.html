@@ -43,6 +43,26 @@
       <p>
         This is an early draft of the Web App Launch Handler API.
       </p>
+      <pre class="warning">
+        WIP Notes
+
+        Spec skeleton:
+          Use case example with code:
+            Music player.
+          Extend manifest extension point:
+            Process launch_handler field.
+            Process inner route_to field
+          IDLs:
+            LaunchParams IDL:
+              Note extensibility design; for members other than targetURL at
+              most one will not be undefined depending on the type of launch.
+            LaunchQueue IDL.
+              Note why not events.
+            window.launchQueue IDL.
+          Define launch process:
+            Define launch routing selection process:
+              Define route_to values and their meanings.
+      </pre>
     </section>
     <section>
       <h2>
@@ -130,26 +150,6 @@
         |manifest:ordered map|.
         </li>
       </ol>
-      <pre class="warning">
-        WIP Notes
-
-        Spec skeleton:
-          Use case example with code:
-            Music player.
-          Extend manifest extension point:
-            Process launch_handler field.
-            Process inner route_to field
-          IDLs:
-            LaunchParams IDL:
-              Note extensibility design; for members other than targetURL at
-              most one will not be undefined depending on the type of launch.
-            LaunchQueue IDL.
-              Note why not events.
-            window.launchQueue IDL.
-          Define launch process:
-            Define launch routing selection process:
-              Define route_to values and their meanings.
-      </pre>
       <section>
         <h3>
           Processing the `launch_handler` member
