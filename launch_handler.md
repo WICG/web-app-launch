@@ -43,10 +43,6 @@ most use cases, and simplify the implementation in browsers and sites.
 - Configuring whether link navigations into the scope of a web app launch the
   web app (this is out of scope and may be handled by a future version of the
   [Declarative Link Capturing][dlc-explainer] spec).
-- Multi-document-instance web apps: a web app that opens documents in their own
-  instances but wishes to refocus an already open document instead of opening
-  duplicate instances for it. This would instead by handled by the [service
-  worker `launch` event][sw-launch-explainer].
 
 ## Background
 
@@ -84,15 +80,17 @@ will be enqueued in the `launchQueue` global `LaunchQueue` instance for the
 browsing context that handled the launch. Scripts can provide a single
 `LaunchConsumer` function to receive enqueued `LaunchParams`.
 
-This functions similarly to an event listener, but avoids the problem where
-scripts may "miss" events if they're too slow to register their event listeners,
-this problem is particularly pronounced for launch events as they occur
-during the page's initialization. `LaunchParams` are buffered indefinitely until
-they are consumed.
+This functions similarly to an event listener, but avoids the race condition
+where scripts may "miss" events if they're too slow to register their event
+listeners, this problem is particularly pronounced for launch events as they
+occur during the page's initialization. `LaunchParams` are buffered indefinitely
+until they are consumed. Crucially, if any `LaunchParams` are buffered into a
+`LaunchQueue` before a call to `setConsumer()`, they will be immediately passed
+into the consumer afterwards.
 
 ```idl
-[Exposed=Window] interface LaunchParams {
-  readonly attribute DOMString? targetURL;
+[Exposed=Window] dictionary LaunchParams {
+  readonly attribute DOMString targetURL;
 };
 
 callback LaunchConsumer = any (LaunchParams params);
@@ -109,10 +107,14 @@ partial interface Window {
 Example usage for a single-window music player app:
 ```js
 launchQueue.setConsumer(launchParams => {
-  const songID = extractSongId(launchParams.targetURL);
+  const songID = maybeExtractSongId(launchParams.targetURL);
   if (songID) {
+    // No need to navigate the current page; can start playing the launched song
+    // directly.
     playSong(songID);
+    return;
   }
+  location.href = launchParams.targetURL;
 });
 ```
 
@@ -141,9 +143,9 @@ If unspecified then `launch_handler` defaults to
 
 `route_to`:
 - `auto`: The behaviour is up to the user agent to decide what works best for
-  the platform. E.g., mobile devices only support single clients and would use
-  `existing-client-navigate`, while desktop devices support multiple windows and
-  would use `new-client` to avoid data loss.
+  the platform. This reflects the status quo of user agent implementations prior
+  to this proposal: mobile agents typically navigate an existing client, while
+  desktop agents typically create a new one and avoid clobbering state.
 - `new-client`: A new browsing context is created in a web app window to load
   the launch's target URL.
 - `existing-client-navigate`: The most recently interacted with browsing context
@@ -175,6 +177,13 @@ web app windows:
 ```
 
 ## Possible extensions to this proposal
+
+- Add `"service-worker"` as a `route_to` option. This would invoke a [service
+  worker `launch` event][sw-launch-explainer].
+
+  This would allow web apps that open documents in their own app instances but
+  want to bring an existing document instance into focus when the same document
+  is re-launched instead of opening a duplicate app instance for it.
 
 - Add two members:
   ```
