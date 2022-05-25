@@ -65,7 +65,6 @@
             "display": "standalone" must use this concept.
               It lives in media queries lol:
                 https://www.w3.org/TR/mediaqueries-5/#display-mode-standalone
-            Maybe define "app window" as any app instance that's not display: browser.
           Client.
             route_to uses this name.
             Service worker APIs use this name.
@@ -74,6 +73,8 @@
                   https://developer.mozilla.org/en-US/docs/Web/API/WindowClient
                     The WindowClient interface of the ServiceWorker API represents the scope of a service worker client that is a document in a browsing context, controlled by an active worker.
                   App windows don't have to be controlled by an active worker to be eligible for route_to.
+                  "new-client" -> "new-non-browser-display-mode"??
+                  Maybe define "app window" as any app instance that's not display: browser.
 
       </pre>
     </section>
@@ -112,13 +113,13 @@
           "url": "/discover"
         }],
         "launch_handler": {
-          "route_to": "existing-client-retain"
+          "route_to": "existing-window-retain"
         }
       }
       </pre>
       <p>
         With the <a data-cite="LaunchHandler.route_to">route_to</a> parameter
-        set to "existing-client-retain" causes app launches to bring existing
+        set to "existing-window-retain" causes app launches to bring existing
         app instances (if any) into focus without navigating them away from
         their current document.
       </p>
@@ -195,9 +196,7 @@
           launch.
         </p>
         <p>
-          WIP: <dfn>route to list</dfn> is a list containing "auto", "new-client", "existing-client-navigate", "existing-client-retain".
-          TODO: xref all this up.
-
+          <dfn>route to list</dfn> is a list containing <a>"auto"</a>, <a>"new-window"</a>, <a>"existing-window-navigate"</a>, <a>"existing-window-retain"</a>.
           <p>
             The route to values describe how web app launches should select an
             existing app instance to use if there are any. They behave as
@@ -211,9 +210,9 @@
               The user agent's default launch routing behaviour is used.
               <p class="note">
                 The user agent is expected to decide what works best for the
-                platform. E.g., mobile devices only support single clients and would
-                use `existing-client-navigate`, while desktop devices support
-                multiple windows and would use `new-client` to avoid data loss.
+                platform. E.g., mobile devices only support single windows and would
+                use `existing-window-navigate`, while desktop devices support
+                multiple windows and would use `new-window` to avoid data loss.
               </p>
               <pre class="issue">
                 WIP:
@@ -223,16 +222,16 @@
               </pre>
             </dd>
             <dt>
-              <dfn>"new-client"</dfn>
+              <dfn>"new-window"</dfn>
             </dt>
             <dd>
               A new browsing context is created in a web app window to load the launch's target URL.
             </dd>
           </dl>
 
-- `existing-client-navigate`: The most recently interacted with browsing context
+- `existing-window-navigate`: The most recently interacted with browsing context
   in a web app window is navigated to the launch's target URL.
-- `existing-client-retain`: The most recently interacted with browsing context
+- `existing-window-retain`: The most recently interacted with browsing context
   in a web app window is chosen to handle the launch. A new `LaunchParams` with
   its `targetURL` set to the launch URL will be enqueued in the document's
   `window.launchQueue`.
@@ -260,18 +259,26 @@
     </section>
     <section>
       <h2>
-        Processing Web App Launches
+        Handling Web App Launches
       </h2>
       <section>
         <h2>
-          Choosing a Launch Client
+          Web App Windows
         </h2>
         <p>
-          The steps to <dfn>select a web app client for launch</dfn> are given
+          A <dfn>web app window</dfn> is an instance of a web app that's not [=display mode=] [=browser=].
+        </p>
+      </section>
+      <section>
+        <h2>
+          Choosing a Launch Window
+        </h2>
+        <p>
+          The steps to <dfn>select a web app window for launch</dfn> are given
           by the following algorithm. The algorithm takes a |route to:DOMString| which is one of [=route to list=].
         </p>
         <ol class="algorithm">
-          <li>If |route to| is "[=route to/new-client=],
+          <li>If |route to| is "[=route to/new-window=],
           </li>
         </ol>
       </section>
