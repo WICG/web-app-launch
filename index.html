@@ -40,9 +40,6 @@
       </p>
     </section>
     <section id="sotd">
-      <p>
-        This is an early draft of the Web App Launch Handler API.
-      </p>
       <pre class="warning">
         WIP Notes
 
@@ -50,8 +47,11 @@
           Use case example with code:
             Music player.
           Extend manifest extension point:
-            Process launch_handler field.
-            Process inner route_to field
+            launch_handler field.
+            inner route_to field:
+              Define route_to values and their meanings.
+          Define launch process:
+            Define launch routing selection process:
           IDLs:
             LaunchParams IDL:
               Note extensibility design; for members other than targetURL at
@@ -59,9 +59,22 @@
             LaunchQueue IDL.
               Note why not events.
             window.launchQueue IDL.
-          Define launch process:
-            Define launch routing selection process:
-              Define route_to values and their meanings.
+
+        Concepts to import:
+          App windows.
+            "display": "standalone" must use this concept.
+              It lives in media queries lol:
+                https://www.w3.org/TR/mediaqueries-5/#display-mode-standalone
+            Maybe define "app window" as any app instance that's not display: browser.
+          Client.
+            route_to uses this name.
+            Service worker APIs use this name.
+              Better check the SW concept is compatible here.
+                Oh no it might not be:
+                  https://developer.mozilla.org/en-US/docs/Web/API/WindowClient
+                    The WindowClient interface of the ServiceWorker API represents the scope of a service worker client that is a document in a browsing context, controlled by an active worker.
+                  App windows don't have to be controlled by an active worker to be eligible for route_to.
+
       </pre>
     </section>
     <section>
@@ -152,7 +165,7 @@
       </ol>
       <section>
         <h3>
-          Processing the `launch_handler` member
+          `launch_handler` member
         </h3>
         <p>
           The steps for <dfn>processing the `launch_handler` member</dfn>, given
@@ -174,13 +187,62 @@
       </section>
       <section>
         <h3>
-          Processing the `route_to` member
+          `route_to` member
         </h3>
+        <p>
+          The `route_to` member of the manifest is a [=string=] that declares
+          how web app launches chose and navigate app instances to use for the
+          launch.
+        </p>
+        <p>
+          WIP: <dfn>route to list</dfn> is a list containing "auto", "new-client", "existing-client-navigate", "existing-client-retain".
+          TODO: xref all this up.
+
+          <p>
+            The route to values describe how web app launches should select an
+            existing app instance to use if there are any. They behave as
+            follows:
+          </p>
+          <dl>
+            <dt>
+              <dfn>"auto"</dfn>
+            </dt>
+            <dd>
+              The user agent's default launch routing behaviour is used.
+              <p class="note">
+                The user agent is expected to decide what works best for the
+                platform. E.g., mobile devices only support single clients and would
+                use `existing-client-navigate`, while desktop devices support
+                multiple windows and would use `new-client` to avoid data loss.
+              </p>
+              <pre class="issue">
+                WIP:
+                Q: What if the developer wants to customise their launch behaviour
+                according to platform specifics like the browser default behaviour does?
+                A: They can use service-worker in the future to do that probably.
+              </pre>
+            </dd>
+            <dt>
+              <dfn>"new-client"</dfn>
+            </dt>
+            <dd>
+              A new browsing context is created in a web app window to load the launch's target URL.
+            </dd>
+          </dl>
+
+- `existing-client-navigate`: The most recently interacted with browsing context
+  in a web app window is navigated to the launch's target URL.
+- `existing-client-retain`: The most recently interacted with browsing context
+  in a web app window is chosen to handle the launch. A new `LaunchParams` with
+  its `targetURL` set to the launch URL will be enqueued in the document's
+  `window.launchQueue`.
+
+
+        </p>
         <p>
           To <dfn>process the `route_to` member</dfn>, given [=ordered
           map=] |json_launch_handler:ordered map|, [=ordered map=]
-          |manifest_launch_handler:ordered map|, [=URL=] |manifest_URL:URL|, run
-          the following:
+          |manifest_launch_handler:ordered map|, run the following:
         </p>
         <ol class="algorithm">
           <li>If |json_launch_handler|["route_to"] does not [=map/exist=],
@@ -198,17 +260,65 @@
     </section>
     <section>
       <h2>
-        Handling app launches in script
+        Processing Web App Launches
+      </h2>
+      <section>
+        <h2>
+          Choosing a Launch Client
+        </h2>
+        <p>
+          The steps to <dfn>select a web app client for launch</dfn> are given
+          by the following algorithm. The algorithm takes a |route to:DOMString| which is one of [=route to list=].
+        </p>
+        <ol class="algorithm">
+          <li>If |route to| is "[=route to/new-client=],
+          </li>
+        </ol>
+      </section>
+      <p>
+        The steps to <dfn>launch a web app</dfn> are given by the following
+        algorithm. The algorithm takes {{LaunchParams}}
+        |params:LaunchParams|.
+      </p>
+      <ol class="algorithm">
+        <li>If |params| is null, set |params| to a new {{LaunchParams}} with
+        {{LaunchParams/targetURL}} set to [=manifest/start_url=].
+        </li>
+        <li>Create a new top level browsing context and navigate it to
+        |params.targetUrl|.
+        </li>
+        <li>Append |params| to the [=unconsumed launch params=] of the
+        launched document's {{Window.LaunchQueue}}.
+        </li>
+        <li>If the [=assigned launch consumer=] |consumer| is set:
+          <ol>
+            <li>[=list/For each=] |launch_params:LaunchParams| of
+            [=unconsumed launch params=]:
+              <ol>
+                <li>Invoke |consumer| with |launch_params|.
+                </li>
+              </ol>
+            </li>
+            <li>Set [=unconsumed launch params=] to the empty list.
+            </li>
+          </ol>
+        </li>
+      </ol>
+    </section>
+    <section>
+      <h2>
+        Script Interfaces to App Launches
       </h2>
       <section data-dfn-for="LaunchParams">
         <h3>
           <dfn>LaunchParams</dfn> interface
         </h3>
         <ul class="issue">
-          <li>This has been copied directly from <a href="https://wicg.github.io/manifest-incubations/index.html#launch-queue-and-launch-params">Manifest Incubations</a> without modification, this launch_handler spec will be its new home soon.</li>
+          <li>This has been copied directly from <a href="https://wicg.github.io/manifest-incubations/index.html#launch-queue-and-launch-params">Manifest Incubations</a> without modification, this launch_handler spec should be its replacement home.</li>
           <li>LaunchParams should be a dictionary.</li>
           <li>targetURL should not be nullable.</li>
           <li>files should be optional</li>
+          <li>For members other than targetURL only one should be not undefined, indicating the type of launch.</li>
         </ul>
         <pre class="idl">
           [Exposed=Window] interface LaunchParams {
@@ -278,40 +388,13 @@
             </li>
           </ol>
         </section>
-      </section>
-      <section>
-        <h3>
-          Handling Web App Launches
-        </h3>
-        <p>
-          The steps to <dfn>launch a web app</dfn> are given by the following
-          algorithm. The algorithm takes {{LaunchParams}}
-          |params:LaunchParams|.
+        <p class="note">
+          {{LaunchParams}} are passed to the document via a {{LaunchQueue}}
+          instead of via events to avoid a race condition between a launch event
+          firing and page scripts attaching the event listener. In contrast the
+          {{LaunchQueue}} buffers all enqueued {{LaunchParams}} until a
+          {{LaunchConsumer}} has been set.
         </p>
-        <ol class="algorithm">
-          <li>If |params| is null, set |params| to a new {{LaunchParams}} with
-          {{LaunchParams/targetURL}} set to [=manifest/start_url=].
-          </li>
-          <li>Create a new top level browsing context and navigate it to
-          |params.targetUrl|.
-          </li>
-          <li>Append |params| to the [=unconsumed launch params=] of the
-          launched document's {{Window.LaunchQueue}}.
-          </li>
-          <li>If the [=assigned launch consumer=] |consumer| is set:
-            <ol>
-              <li>[=list/For each=] |launch_params:LaunchParams| of
-              [=unconsumed launch params=]:
-                <ol>
-                  <li>Invoke |consumer| with |launch_params|.
-                  </li>
-                </ol>
-              </li>
-              <li>Set [=unconsumed launch params=] to the empty list.
-              </li>
-            </ol>
-          </li>
-        </ol>
       </section>
     </section>
     <section class="informative" data-cite="secure-contexts">
