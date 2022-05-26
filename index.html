@@ -75,6 +75,12 @@
                   App windows don't have to be controlled by an active worker to be eligible for route_to.
                   "new-client" -> "new-non-browser-display-mode"??
                   Maybe define "app window" as any app instance that's not display: browser.
+                Wait never mind.
+                  WindowClient is a JS interface not a spec concept. As an interface being exposed via a SW API of course it has an active service worker.
+                  The SW spec defines a service worker client as an environment: https://w3c.github.io/ServiceWorker/#dfn-service-worker-client
+                  And an environment may not have an active service worker.
+                We should probably target window clients: https://w3c.github.io/ServiceWorker/#dfn-window-client
+
 
       </pre>
     </section>
@@ -113,13 +119,13 @@
           "url": "/discover"
         }],
         "launch_handler": {
-          "route_to": "existing-window-retain"
+          "route_to": "existing-client-retain"
         }
       }
       </pre>
       <p>
         With the <a data-cite="LaunchHandler.route_to">route_to</a> parameter
-        set to "existing-window-retain" causes app launches to bring existing
+        set to "existing-client-retain" causes app launches to bring existing
         app instances (if any) into focus without navigating them away from
         their current document.
       </p>
@@ -191,52 +197,53 @@
           `route_to` member
         </h3>
         <p>
-          The `route_to` member of the manifest is a [=string=] that declares
-          how web app launches chose and navigate app instances to use for the
-          launch.
+          The `route_to` member of the manifest is a [=string=] or list of [=strings=] that declares
+          whether web app launches reuse existing app [=window clients=] if any exist and whether or not to navigate their browsing context to the launch's [=target URL=] according to a [=route to target=].
         </p>
         <p>
-          <dfn>route to list</dfn> is a list containing <a>"auto"</a>, <a>"new-window"</a>, <a>"existing-window-navigate"</a>, <a>"existing-window-retain"</a>.
           <p>
-            The route to values describe how web app launches should select an
-            existing app instance to use if there are any. They behave as
-            follows:
+            The <dfn>route to targets</dfn> are as follows:
           </p>
           <dl>
             <dt>
-              <dfn>"auto"</dfn>
+              <dfn data-dfn-for="route to">auto</dfn>
             </dt>
             <dd>
               The user agent's default launch routing behaviour is used.
               <p class="note">
                 The user agent is expected to decide what works best for the
                 platform. E.g., mobile devices only support single windows and would
-                use `existing-window-navigate`, while desktop devices support
-                multiple windows and would use `new-window` to avoid data loss.
+                use `existing-client-navigate`, while desktop devices support
+                multiple windows and would use `new-client` to avoid data loss.
               </p>
-              <pre class="issue">
-                WIP:
-                Q: What if the developer wants to customise their launch behaviour
-                according to platform specifics like the browser default behaviour does?
-                A: They can use service-worker in the future to do that probably.
-              </pre>
             </dd>
             <dt>
-              <dfn>"new-window"</dfn>
+              <dfn data-dfn-for="route to">new-client</dfn>
             </dt>
             <dd>
-              A new browsing context is created in a web app window to load the launch's target URL.
+              A new web app client is created to load the launch's target URL.
+            </dd>
+            <dt>
+              <dfn data-dfn-for="route to">existing-client-navigate</dfn>
+            </dt>
+            <dd>
+              If an existing web app client is open it is brought to focus and
+              navigated to the launch's target URL. If there are no existing web
+              app clients the [=route to/new-client=] behaviour is used instead.
+            </dd>
+            <dt>
+              <dfn data-dfn-for="route to">existing-client-retain</dfn>
+            </dt>
+            <dd>
+              If an existing web app client is open it is brought to focus but
+              not navigated to the launch's target URL, instead the target URL
+              is communicated via {{LaunchParams}} . If there are no existing
+              web app clients the [=route to/new-client=] behaviour is used instead.
             </dd>
           </dl>
-
-- `existing-window-navigate`: The most recently interacted with browsing context
-  in a web app window is navigated to the launch's target URL.
-- `existing-window-retain`: The most recently interacted with browsing context
-  in a web app window is chosen to handle the launch. A new `LaunchParams` with
-  its `targetURL` set to the launch URL will be enqueued in the document's
-  `window.launchQueue`.
-
-
+          <p>
+            The <dfn>route to targets list</dfn> is the list « "[=route to/auto=]", "[=route to/new-client=]", "[=route to/existing-client-navigate=]" , "[=route to/existing-client-retain=]" ».
+          </p>
         </p>
         <p>
           To <dfn>process the `route_to` member</dfn>, given [=ordered
@@ -247,14 +254,39 @@
           <li>If |json_launch_handler|["route_to"] does not [=map/exist=],
           return.
           </li>
-          <li>If the type of |json_launch_handler|["route_to"] is not
-          [=string=], return.
+          <li>If the type of |json_launch_handler|["route_to"] is
+          [=list=]:
+            <ol class="algorithm">
+              <li>[=list/For each=] |entry| of |json_launch_handler|["route_to"]:
+                <ol class="algorithm">
+                  <li>If the type of |entry| is not [=string=], continue.
+                  </li>
+                  <li>If [=route to targets list=] contains |json_launch_handler|["route_to"], set manifest_launch_handler["route_to"] to |entry| and return.
+                  </li>
+                </ol>
+              </li>
+            </ol>
           </li>
-          <li>If [=route to list=] does not contain |json_launch_handler|["route_to"], return.
+          <li>If the type of |json_launch_handler|["route_to"] is not [=string=], return.
+          </li>
+          <li>If [=route to targets list=] does not contain |json_launch_handler|["route_to"], return.
           </li>
           <li>Set manifest_launch_handler["route_to"] to |json_launch_handler|["route_to"].
           </li>
         </ol>
+        <p class="note">
+          `route_to` accepts a list of strings as a future proofing mechanism. If a new [=route to target=] is added in the future but has not yet been implemented by all user agents, web developers can cater to the old user agents by providing fallback [=route to target=] values.
+        </p>
+        <p class="note">
+          For example: if "existing-client-marquee" is added in the future a site developer can fallback to "[=route to/existing-client-navigate=]" with the following:
+        </p>
+        <pre class="note json">
+          {
+            "launch_handler": {
+              "route_to": ["existing-client-marquee", "existing-client-navigate"]
+            }
+          }
+        </pre>
       </section>
     </section>
     <section>
@@ -263,22 +295,17 @@
       </h2>
       <section>
         <h2>
-          Web App Windows
+          Choosing a Launch Client
         </h2>
         <p>
-          A <dfn>web app window</dfn> is an instance of a web app that's not [=display mode=] [=browser=].
+          A <dfn>web app client</dfn> is an instance of a web app that's not [=display mode=] [=browser=].
         </p>
-      </section>
-      <section>
-        <h2>
-          Choosing a Launch Window
-        </h2>
         <p>
-          The steps to <dfn>select a web app window for launch</dfn> are given
+          The steps to <dfn>select a web app client for launch</dfn> are given
           by the following algorithm. The algorithm takes a |route to:DOMString| which is one of [=route to list=].
         </p>
         <ol class="algorithm">
-          <li>If |route to| is "[=route to/new-window=],
+          <li>If |route to| is "[=route to/new-client=],
           </li>
         </ol>
       </section>
