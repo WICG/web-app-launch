@@ -22,7 +22,15 @@
           w3cid: 110742
         }],
         xref: {
-          specs: ["web-platform", "file-system-access"]
+          specs: [
+            "web-platform",
+            "file-system-access",
+            "mediaqueries",
+            "service-workers",
+            "html",
+            "appmanifest",
+            "infra"
+          ]
         }
         // To add eventually:
         //  - mdn: true
@@ -90,7 +98,7 @@
       </h2>
       <p>
         In order to implement this API, a the user agent MUST support
-        [[[appmanifest]]] and MUST support multiple simultaneous app instances.
+        [[[appmanifest]]].
       </p>
     </section>
     <section class="informative" data-link-for="WebAppManifest">
@@ -165,7 +173,7 @@
         manifest</a>:
       </p>
       <ol>
-        <li>Run the steps for <a>processing the <code>launch_handler</code> member</a>
+        <li>Run the steps for [=processing the launch_handler member=]
         given [=ordered map=] |json:ordered map| and [=ordered map=]
         |manifest:ordered map|.
         </li>
@@ -194,11 +202,14 @@
       </section>
       <section>
         <h3>
-          `route_to` member
+          [=route_to=] member
         </h3>
         <p>
-          The `route_to` member of the manifest is a [=string=] or list of [=strings=] that declares
+          The <dfn data-dfn-for="manifest">route_to</dfn> member of the manifest is a [=string=] or list of [=strings=] that declares
           whether web app launches reuse existing app [=window clients=] if any exist and whether or not to navigate their browsing context to the launch's [=target URL=] according to a [=route to target=].
+        </p>
+        <p>
+          User agents MAY support only a subset of the [=route to targets=] depending on the constraints of the platform (e.g. mobile devices may not support multiple app instances simultaneously).
         </p>
         <p>
           <p>
@@ -212,9 +223,9 @@
               The user agent's default launch routing behaviour is used.
               <p class="note">
                 The user agent is expected to decide what works best for the
-                platform. E.g., mobile devices only support single windows and would
-                use `existing-client-navigate`, while desktop devices support
-                multiple windows and would use `new-client` to avoid data loss.
+                platform. E.g., on mobile devices that only support single app instances the user agent may
+                use `existing-client-navigate`, while on desktop devices that support
+                multiple windows the user agent may use `new-client` to avoid data loss.
               </p>
             </dd>
             <dt>
@@ -238,12 +249,10 @@
               If an existing web app client is open it is brought to focus but
               not navigated to the launch's target URL, instead the target URL
               is communicated via {{LaunchParams}} . If there are no existing
-              web app clients the [=route to/new-client=] behaviour is used instead.
+              web app clients the [=route to/new-client=] behaviour is used
+              instead.
             </dd>
           </dl>
-          <p>
-            The <dfn>route to targets list</dfn> is the list « "[=route to/auto=]", "[=route to/new-client=]", "[=route to/existing-client-navigate=]" , "[=route to/existing-client-retain=]" ».
-          </p>
         </p>
         <p>
           To <dfn>process the `route_to` member</dfn>, given [=ordered
@@ -261,7 +270,7 @@
                 <ol class="algorithm">
                   <li>If the type of |entry| is not [=string=], continue.
                   </li>
-                  <li>If [=route to targets list=] contains |json_launch_handler|["route_to"], set manifest_launch_handler["route_to"] to |entry| and return.
+                  <li>If |json_launch_handler|["route_to"] is supported by the user agent, set manifest_launch_handler["route_to"] to |entry| and return.
                   </li>
                 </ol>
               </li>
@@ -269,21 +278,19 @@
           </li>
           <li>If the type of |json_launch_handler|["route_to"] is not [=string=], return.
           </li>
-          <li>If [=route to targets list=] does not contain |json_launch_handler|["route_to"], return.
-          </li>
-          <li>Set manifest_launch_handler["route_to"] to |json_launch_handler|["route_to"].
+          <li>If |json_launch_handler|["route_to"] is supported by the user agent, set manifest_launch_handler["route_to"] to |json_launch_handler|["route_to"].
           </li>
         </ol>
         <p class="note">
-          `route_to` accepts a list of strings as a future proofing mechanism. If a new [=route to target=] is added in the future but has not yet been implemented by all user agents, web developers can cater to the old user agents by providing fallback [=route to target=] values.
+          `route_to` accepts a list of strings as a future proofing mechanism. If a new [=route to target=] is added in the future but has not yet been implemented by all user agents, web developers can cater to the old user agents by providing fallback [=route to target=] values in a list format. User agents will use the first value that is valid to them.
         </p>
         <p class="note">
-          For example: if "existing-client-marquee" is added in the future a site developer can fallback to "[=route to/existing-client-navigate=]" with the following:
+          For example: if "some-new-behaviour" is added in the future a site developer can specify "[=route to/existing-client-navigate=]" to be the fallback with the following:
         </p>
         <pre class="note json">
           {
             "launch_handler": {
-              "route_to": ["existing-client-marquee", "existing-client-navigate"]
+              "route_to": ["some-new-behaviour", "existing-client-navigate"]
             }
           }
         </pre>
@@ -295,49 +302,84 @@
       </h2>
       <section>
         <h2>
-          Choosing a Launch Client
+          Launching a Web App
         </h2>
         <p>
-          A <dfn>web app client</dfn> is an instance of a web app that's not [=display mode=] [=browser=].
-        </p>
-        <p>
-          The steps to <dfn>select a web app client for launch</dfn> are given
-          by the following algorithm. The algorithm takes a |route to:DOMString| which is one of [=route to list=].
+          The steps to <dfn>launch a web app</dfn> are given by the following algorithm and takes a {{LaunchParams}} |params:LaunchParams|.
         </p>
         <ol class="algorithm">
-          <li>If |route to| is "[=route to/new-client=],
+          <li>If |params| is null, set |params| to a new {{LaunchParams}} with {{LaunchParams/targetURL}} set to [=manifest/start_url=].
+          </li>
+          <li>Set |client| to the result of running the steps to [=prepare a web app launch client=] passing [=manifest/route_to=] and |params|.{{LaunchParams/targetURL}}.
+          </li>
+          <li>Append |params| to the [=unconsumed launch params=] of the |client|'s document's {{Window.LaunchQueue}}.
+          </li>
+          <li>If the [=assigned launch consumer=] |consumer| is set:
+            <ol>
+              <li>[=list/For each=] |launch_params:LaunchParams| of [=unconsumed launch params=]:
+                <ol>
+                  <li>Invoke |consumer| with |launch_params|.
+                  </li>
+                </ol>
+              </li>
+              <li>Set [=unconsumed launch params=] to the empty list.
+              </li>
+            </ol>
           </li>
         </ol>
       </section>
-      <p>
-        The steps to <dfn>launch a web app</dfn> are given by the following
-        algorithm. The algorithm takes {{LaunchParams}}
-        |params:LaunchParams|.
-      </p>
-      <ol class="algorithm">
-        <li>If |params| is null, set |params| to a new {{LaunchParams}} with
-        {{LaunchParams/targetURL}} set to [=manifest/start_url=].
-        </li>
-        <li>Create a new top level browsing context and navigate it to
-        |params.targetUrl|.
-        </li>
-        <li>Append |params| to the [=unconsumed launch params=] of the
-        launched document's {{Window.LaunchQueue}}.
-        </li>
-        <li>If the [=assigned launch consumer=] |consumer| is set:
-          <ol>
-            <li>[=list/For each=] |launch_params:LaunchParams| of
-            [=unconsumed launch params=]:
-              <ol>
-                <li>Invoke |consumer| with |launch_params|.
-                </li>
-              </ol>
-            </li>
-            <li>Set [=unconsumed launch params=] to the empty list.
-            </li>
-          </ol>
-        </li>
-      </ol>
+      <section>
+        <h2>
+          Choosing a [=Web App Launch Client=]
+        </h2>
+        <p>
+          A <dfn>web app launch client</dfn> is a [=service worker client/window client=] associated with the web app.
+        </p>
+        <p class="note">
+          The exact form of this association is up to the user agent e.g. a dedicated app window separated in its UI presentation from general hyperlink browsing.
+        </p>
+        <p>
+          To <dfn>prepare a web app launch client</dfn>, given |route to| and |target URL:URL|:
+        </p>
+        <ol class="algorithm">
+          <li>
+            <p>Switching on |route to|, run the following substeps:</p>
+            <dl class="switch">
+              <dt>[=route to/new-client=]</code>
+              <dd>
+                <ol class="algorithm">
+                  <li>Let |client| be the result of <a href="https://html.spec.whatwg.org/multipage/browsers.html#creating-a-new-top-level-browsing-context">creating a new top-level browsing context</a> presented in accordance with [=manifest/display=].
+                  </li>
+                  <li>Run the steps to [=navigate=] |client| passing |target URL|.
+                  </li>
+                  <li>Return |client|.
+                  </li>
+                </ol>
+              <dt>[=route to/existing-client-navigate=] or [=route to/existing-client-retain=]</code>
+              <dd>
+                <ol class="algorithm">
+                  <li>If there is no [=service worker client/window client=] for the web app, return the result of the steps to [=prepare a web app launch client=] passing [=route to/new-client=] and |target URL|.
+                  </li>
+                  <li>Let |client| be a [=service worker client/window client=] for the web app, the exact selection algorithm is decided by the user agent.
+                  </li>
+                  <li>If |route to| is [=route to/existing-client-navigate=], run the steps to [=navigate=] |client| passing |target URL|.
+                  </li>
+                  <li>Return |client|.
+                  </li>
+                </ol>
+              <dt>Otherwise</code>
+              <dd>
+                <ol class="algorithm">
+                  <li>Let |route_to| be either [=route to/new-client=] or [=route to/existing-client-navigate=] according to the user agent's decision for which is most appropriate.
+                  </li>
+                  <li>Return the result of the steps to [=prepare a web app launch client=] passing |route to| and |target URL|.
+                  </li>
+                </ol>
+              </dd>
+            </dl>
+          </li>
+        </ol>
+      </section>
     </section>
     <section>
       <h2>
@@ -444,11 +486,11 @@
         Security and privacy considerations
       </h2>
       <ul>
-        <li>Invoking a <a>web share target</a> means potentially sending
+        <li>Invoking a [=web share target=] means potentially sending
         private user data to a third-party website. Implementors are to take
         every precaution that the user understands which party the data is
         being sent to (<i>e.g.</i>, communicating the web share target's
-        origin), before running the <a>invocation</a> algorithm.
+        origin), before running the [=invocation=] algorithm.
         </li>
         <li>Of particular concern is spoofing: a web share target presenting
         itself as a different party (by setting its name and icon accordingly).
@@ -478,18 +520,7 @@
         Acknowledgments
       </h2>
       <p>
-        Thanks to the [[[WEBINTENTS]]] team, who laid the groundwork for the
-        web app interoperability use cases. In particular, <a href=
-        "https://paul.kinlan.me/">Paul Kinlan</a>, who did a lot of early
-        advocacy for Web Share and Web Share Target.
-      </p>
-      <p>
-        Thanks to Connie Pyromallis, who wrote an early draft of this spec, and
-        helped design and prototype the API.
-      </p>
-      <p>
-        Thanks to Alex Russell and David Baron, for their feedback on early
-        drafts of this spec.
+        Ty WIP.
       </p>
     </section>
   </body>
