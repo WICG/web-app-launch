@@ -29,7 +29,8 @@
             "service-workers",
             "html",
             "appmanifest",
-            "infra"
+            "infra",
+            "url"
           ]
         }
         // To add eventually:
@@ -180,10 +181,17 @@
       </ol>
       <section>
         <h3>
-          `launch_handler` member
+          [=manifest/launch_handler=] member
         </h3>
         <p>
-          The steps for <dfn>processing the `launch_handler` member</dfn>, given
+          The <dfn data-dfn-for="manifest">`launch_handler`</dfn> is a dictionary
+          containing configurations for how web app launches should behave.
+        </p>
+        <p class="note">
+          [=manifest/launch_handler=] is a dictionary despite [=manifest/route_to=] being the only member, this is to give room for more members to be added should other types of behaviors be needed in the future.
+        </p>
+        <p>
+          The steps for <dfn>processing the launch_handler member</dfn>, given
           [=ordered map=] |json:ordered map|, [=ordered map=]
           |manifest:ordered map|, are as follows:
         </p>
@@ -202,11 +210,11 @@
       </section>
       <section>
         <h3>
-          [=route_to=] member
+          [=manifest/route_to=] member
         </h3>
         <p>
-          The <dfn data-dfn-for="manifest">route_to</dfn> member of the manifest is a [=string=] or list of [=strings=] that declares
-          whether web app launches reuse existing app [=window clients=] if any exist and whether or not to navigate their browsing context to the launch's [=target URL=] according to a [=route to target=].
+          The <dfn data-dfn-for="manifest">`route_to`</dfn> member of the manifest is a [=string=] or list of [=strings=] that declares
+          whether web app launches reuse existing app [=service worker client/window clients=] if any exist and whether or not to navigate their browsing context to the launch's {{LaunchParams/targetURL}} according to a [=route to target=].
         </p>
         <p>
           User agents MAY support only a subset of the [=route to targets=] depending on the constraints of the platform (e.g. mobile devices may not support multiple app instances simultaneously).
@@ -345,6 +353,15 @@
           <li>
             <p>Switching on |route to|, run the following substeps:</p>
             <dl class="switch">
+              <dt>[=route to/auto=]</code>
+              <dd>
+                <ol class="algorithm">
+                  <li>Let |route_to| be either [=route to/new-client=] or [=route to/existing-client-navigate=] according to the user agent's decision for which is most appropriate.
+                  </li>
+                  <li>Return the result of the steps to [=prepare a web app launch client=] passing |route to| and |target URL|.
+                  </li>
+                </ol>
+              </dd>
               <dt>[=route to/new-client=]</code>
               <dd>
                 <ol class="algorithm">
@@ -367,15 +384,6 @@
                   <li>Return |client|.
                   </li>
                 </ol>
-              <dt>Otherwise</code>
-              <dd>
-                <ol class="algorithm">
-                  <li>Let |route_to| be either [=route to/new-client=] or [=route to/existing-client-navigate=] according to the user agent's decision for which is most appropriate.
-                  </li>
-                  <li>Return the result of the steps to [=prepare a web app launch client=] passing |route to| and |target URL|.
-                  </li>
-                </ol>
-              </dd>
             </dl>
           </li>
         </ol>
@@ -390,11 +398,11 @@
           <dfn>LaunchParams</dfn> interface
         </h3>
         <ul class="issue">
-          <li>This has been copied directly from <a href="https://wicg.github.io/manifest-incubations/index.html#launch-queue-and-launch-params">Manifest Incubations</a> without modification, this launch_handler spec should be its replacement home.</li>
-          <li>LaunchParams should be a dictionary.</li>
-          <li>targetURL should not be nullable.</li>
-          <li>files should be optional</li>
-          <li>For members other than targetURL only one should be not undefined, indicating the type of launch.</li>
+          <li>This has been copied directly from <a href="https://wicg.github.io/manifest-incubations/index.html#launch-queue-and-launch-params">Manifest Incubations</a> without modification, this [=manifest/launch_handler=] spec should be its replacement home.</li>
+          <li>{{LaunchParams}} should be a dictionary.</li>
+          <li>{{LaunchParams/targetURL}} should not be nullable.</li>
+          <li>{{LaunchParams/files}} should be optional</li>
+          <li>For members other than {{LaunchParams/targetURL}} only one should be not undefined, indicating the type of launch.</li>
         </ul>
         <pre class="idl">
           [Exposed=Window] interface LaunchParams {
@@ -485,43 +493,12 @@
       <h2>
         Security and privacy considerations
       </h2>
-      <ul>
-        <li>Invoking a [=web share target=] means potentially sending
-        private user data to a third-party website. Implementors are to take
-        every precaution that the user understands which party the data is
-        being sent to (<i>e.g.</i>, communicating the web share target's
-        origin), before running the [=invocation=] algorithm.
-        </li>
-        <li>Of particular concern is spoofing: a web share target presenting
-        itself as a different party (by setting its name and icon accordingly).
-        </li>
-        <li>The spoofing risk is heightened if web share targets are chosen
-        from an online index, rather than a set of targets that the end user
-        has explicitly installed or registered.
-        </li>
-        <li>The requirement that the web share target's origin be a
-        [=potentially trustworthy origin=] is to prevent private user data from
-        being transmitted to a party that does not control the origin in
-        question, or in clear text over the network.
-        </li>
-        <li>A source site using Web Share API, and a receipient site using Web
-        Share Target, could cooperate to join user ids. The source site could
-        use `navigator.share(text: my_id_for_this_user)`, and the (user-chosen)
-        recipient could use that information to join its own user ID with the
-        source origin's user ID. Both sides of the transfer would need to write
-        code to accomplish the transfer, and the user would need to pick the
-        recipient.
-        </li>
-      </ul>
     </section>
     <section id="conformance"></section>
     <section class="appendix informative">
       <h2>
         Acknowledgments
       </h2>
-      <p>
-        Ty WIP.
-      </p>
     </section>
   </body>
 </html>
