@@ -23,14 +23,15 @@
         }],
         xref: {
           specs: [
-            "web-platform",
-            "file-system-access",
-            "mediaqueries",
-            "service-workers",
-            "html",
             "appmanifest",
+            "file-system-access",
+            "html",
             "infra",
-            "url"
+            "mediaqueries",
+            "permissions",
+            "service-workers",
+            "url",
+            "web-platform"
           ]
         }
         // To add eventually:
@@ -49,49 +50,6 @@
       </p>
     </section>
     <section id="sotd">
-      <pre class="warning">
-        WIP Notes
-
-        Spec skeleton:
-          Use case example with code:
-            Music player.
-          Extend manifest extension point:
-            launch_handler field.
-            inner route_to field:
-              Define route_to values and their meanings.
-          Define launch process:
-            Define launch routing selection process:
-          IDLs:
-            LaunchParams IDL:
-              Note extensibility design; for members other than targetURL at
-              most one will not be undefined depending on the type of launch.
-            LaunchQueue IDL.
-              Note why not events.
-            window.launchQueue IDL.
-
-        Concepts to import:
-          App windows.
-            "display": "standalone" must use this concept.
-              It lives in media queries lol:
-                https://www.w3.org/TR/mediaqueries-5/#display-mode-standalone
-          Client.
-            route_to uses this name.
-            Service worker APIs use this name.
-              Better check the SW concept is compatible here.
-                Oh no it might not be:
-                  https://developer.mozilla.org/en-US/docs/Web/API/WindowClient
-                    The WindowClient interface of the ServiceWorker API represents the scope of a service worker client that is a document in a browsing context, controlled by an active worker.
-                  App windows don't have to be controlled by an active worker to be eligible for route_to.
-                  "new-client" -> "new-non-browser-display-mode"??
-                  Maybe define "app window" as any app instance that's not display: browser.
-                Wait never mind.
-                  WindowClient is a JS interface not a spec concept. As an interface being exposed via a SW API of course it has an active service worker.
-                  The SW spec defines a service worker client as an environment: https://w3c.github.io/ServiceWorker/#dfn-service-worker-client
-                  And an environment may not have an active service worker.
-                We should probably target window clients: https://w3c.github.io/ServiceWorker/#dfn-window-client
-
-
-      </pre>
     </section>
     <section>
       <h2>
@@ -109,7 +67,7 @@
       <p>
         A music player app wants to direct app shortcut launches to an existing
         window without interrupting music playback. This music app would add a
-        {{launch_handler}} entry to the [[[appmanifest]]], as shown:
+        [=manifest/launch_handler=] entry to the [[[appmanifest]]], as shown:
       </p>
       <pre class="example json" title="manifest.webmanifest">
       {
@@ -133,14 +91,13 @@
       }
       </pre>
       <p>
-        With the <a data-cite="LaunchHandler.route_to">route_to</a> parameter
-        set to "existing-client-retain" causes app launches to bring existing
+        The [=manifest/route_to=] parameter set to [=route to/existing-client-retain=] causes app launches to bring existing
         app instances (if any) into focus without navigating them away from
         their current document.
       </p>
       <p>
-        A {{LaunchParams}} will be enqueued on the {{window.launchQueue}} where
-        the music player can read the {{targetURL}} in its {{LaunchConsumer}}
+        A {{LaunchParams}} will be enqueued on the {{Window/launchQueue}} where
+        the music player can read the {{LaunchParams/targetURL}} in its {{LaunchConsumer}}
         and handle it in script e.g.:
       </p>
       <pre class="example javascript" title="page.js">
@@ -158,7 +115,7 @@
         A user, already using the music player app to listen to music,
         activating the "Library" app shortcut will trigger an app launch to
         /library which gets routed to the existing app instance, enqueued in the
-        page's {{window.launchQueue}} which, through the assigned
+        page's {{Window/launchQueue}} which, through the assigned
         {{LaunchConsumer}}, brings the library section of the music player into
         focus without affecting the current music playback.
       </p>
@@ -312,6 +269,9 @@
         <h2>
           Launching a Web App
         </h2>
+        <p>
+          When launching a web app via any means (e.g. OS launch, protocol handling, file handling, share target, link capturing, etc.) the trigger of the launch should run the steps to [=launch a web app=] with a {{LaunchParams}} containing relevant launch information (e.g. share data in the event of a share target launch).
+        </p>
         <p>
           The steps to <dfn>launch a web app</dfn> are given by the following algorithm and takes a {{LaunchParams}} |params:LaunchParams|.
         </p>
