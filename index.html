@@ -321,7 +321,7 @@
               and |params|.{{LaunchParams/targetURL}}.
           </li>
           <li>Append |params| to the [=unconsumed launch params=] of the
-              |client|'s document's {{window.LaunchQueue}}.
+              |client|'s document's {{Window/launchQueue}}.
           </li>
           <li>Run the steps to [=drain unconsumed launch params=].
           </li>
@@ -361,8 +361,9 @@
               <dt>[=route to/new-client=]</code>
               <dd>
                 <ol class="algorithm">
-                  <li>Return the result of [=preparing a new web app client=]
-                      passing |manifest| and |target URL|.
+                  <li>Return the result of running the steps to [=prepare a new
+                      web app launch client=] passing |manifest| and
+                      |target URL|.
                   </li>
                 </ol>
               <dt>[=route to/existing-client-navigate=] or
@@ -371,8 +372,8 @@
                 <ol class="algorithm">
                   <li>If there is no [=service worker client/window client=] for
                       the web app, return the result of the result of
-                      [=preparing a new web app client=] passing |manifest| and
-                      |target URL|.
+                      [=prepare a new web app launch client=] passing |manifest|
+                      and |target URL|.
                   </li>
                   <li>Let |client| be a [=service worker client/window client=]
                       for the web app, the exact selection algorithm is decided
