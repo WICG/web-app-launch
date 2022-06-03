@@ -323,7 +323,7 @@
           <li>Append |params| to the [=unconsumed launch params=] of the
               |client|'s document's {{Window/launchQueue}}.
           </li>
-          <li>Run the steps to [=drain unconsumed launch params=].
+          <li>Run the steps to [=process unconsumed launch params=].
           </li>
         </ol>
       </section>
@@ -414,10 +414,11 @@
       </section>
       <section>
         <h2>
-         Draining [=unconsumed launch params=]
+         Processing [=unconsumed launch params=]
         </h2>
         <p>
-          The steps to <dfn>drain unconsumed launch params</dfn> are as follows:
+          The steps to <dfn>process unconsumed launch params</dfn> are as
+          follows:
         </p>
           <li>If the [=assigned launch consumer=] |consumer| is set:
             <ol>
@@ -515,7 +516,7 @@
           <ol class="algorithm">
             <li>Set the [=assigned launch consumer=] to |consumer|.
             </li>
-            <li>Run the steps to [=drain unconsumed launch params=].
+            <li>Run the steps to [=process unconsumed launch params=].
             </li>
           </ol>
         </section>
