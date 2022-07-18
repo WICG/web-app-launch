@@ -229,11 +229,10 @@
               web app clients the [=route to/new-client=] behaviour is used
               instead.
               <p class="warning">
-                In this mode the launch now depends on the page having a
-                {{LaunchConsumer}} set on {{Window/launchQueue}} to receive the
-                launch's {{LaunchParams}} and do something with it. If no action
-                is taken by the page the user experience of the launch is likely
-                going to appear broken.
+                It is necessary for the page to have a {{LaunchConsumer}} set on
+                {{Window/launchQueue}} to receive the launch's {{LaunchParams}}
+                and do something with it. If no action is taken by the page the
+                user experience of the launch is likely going to appear broken.
               </p>
             </dd>
           </dl>
