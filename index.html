@@ -326,7 +326,8 @@
           <li>Append |params| to the [=unconsumed launch params=] of the
               |client|'s document's {{Window/launchQueue}}.
           </li>
-          <li>Run the steps to [=process unconsumed launch params=].
+          <li>Run the steps to [=process unconsumed launch params=] on the
+              |client|'s document's {{Window/launchQueue}}.
           </li>
         </ol>
       </section>
@@ -420,22 +421,26 @@
          Processing [=unconsumed launch params=]
         </h2>
         <p>
-          The steps to <dfn>process unconsumed launch params</dfn> are as
-          follows:
+          The steps to <dfn>process unconsumed launch params</dfn> given a
+          {{LaunchQueue}} |queue| are as follows:
         </p>
-          <li>If the [=assigned launch consumer=] |consumer| is set:
-            <ol>
-              <li>[=list/For each=] |launch_params:LaunchParams| of
-                  [=unconsumed launch params=]:
-                <ol>
-                  <li>Invoke |consumer| with |launch_params|.
-                  </li>
-                </ol>
-              </li>
-              <li>Set [=unconsumed launch params=] to the empty list.
-              </li>
-            </ol>
-          </li>
+          <ol>
+            <li>If the [=assigned launch consumer=] |consumer| is set on
+                |queue|:
+              <ol>
+                <li>[=list/For each=] |launch_params:LaunchParams| of
+                    the |queue|'s [=unconsumed launch params=]:
+                  <ol>
+                    <li>Invoke |consumer| with |launch_params|.
+                    </li>
+                  </ol>
+                </li>
+                <li>Set |queue|'s [=unconsumed launch params=] to the empty
+                    list.
+                </li>
+              </ol>
+            </li>
+          </ol>
       </section>
     </section>
     <section>
