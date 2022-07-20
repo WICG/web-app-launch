@@ -293,19 +293,23 @@
         </p>
         <p class="note">
           Examples of different web app launch triggers:
-          <ul class="note">
-            <li>OS application launch surfaces
-            </li>
-            <li><a href="https://wicg.github.io/manifest-incubations/index.html#protocol_handlers-member">Protocol handling</a>
-            </li>
-            <li><a href="https://wicg.github.io/manifest-incubations/index.html#file_handlers-member">File handling</a>
-            </li>
-            <li><a href="https://wicg.github.io/manifest-incubations/index.html#share_target-member">Share target</a>
-            </li>
-            <li>Link capturing
-            </li>
-          </ul>
         </p>
+        <ul class="note">
+          <!--
+            This should be part of the <p> above but class="note"s don't agree
+            with nested <ul>s and will kick them out of the note box.
+          -->
+          <li>OS application launch surfaces
+          </li>
+          <li><a href="https://wicg.github.io/manifest-incubations/index.html#protocol_handlers-member">Protocol handling</a>
+          </li>
+          <li><a href="https://wicg.github.io/manifest-incubations/index.html#file_handlers-member">File handling</a>
+          </li>
+          <li><a href="https://wicg.github.io/manifest-incubations/index.html#share_target-member">Share target</a>
+          </li>
+          <li>Link capturing
+          </li>
+        </ul>
         <p>
           The steps to <dfn>launch a web app</dfn> are given by the following
           algorithm and takes an optional {{LaunchParams}}
