@@ -8,8 +8,9 @@ Author: Alan Cutter &lt;<alancutter@chromium.org>&gt;<br>
 
 Last updated: 2022-03-03
 
-This site details a proposal to add a `launch_handler` field to the [web app manifest](https://www.w3.org/TR/appmanifest).
-See [explainer](launch_handler.md).
+This repository details a proposal to add a `launch_handler` field to the [web app manifest](https://www.w3.org/TR/appmanifest):
+ - [Explainer](launch_handler.md)
+ - [Draft spec](https://wicg.github.io/sw-launch/)
 
 
 There are two older proposals archived here:
