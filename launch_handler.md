@@ -134,32 +134,32 @@ The shape of this member is as follows:
 
 ```
 "launch_handler": {
-  "route_to": "auto" | "new-client" | "existing-client-navigate" | "existing-client-retain"
+  "client_mode": "auto" | "navigate-new" | "navigate-existing" | "focus-existing"
 }
 ```
 
 If unspecified then `launch_handler` defaults to
-`{ "route_to": "auto" }`.
+`{ "client_mode": "auto" }`.
 
-`route_to`:
+`client_mode`:
 - `auto`: The behaviour is up to the user agent to decide what works best for
   the platform. This reflects the status quo of user agent implementations prior
   to this proposal: mobile agents typically navigate an existing client, while
   desktop agents typically create a new one and avoid clobbering state.
-- `new-client`: A new browsing context is created in a web app window to load
+- `navigate-new`: A new browsing context is created in a web app window to load
   the launch's target URL.
-- `existing-client-navigate`: The most recently interacted with browsing context
+- `navigate-existing`: The most recently interacted with browsing context
   in a web app window is navigated to the launch's target URL.
-- `existing-client-retain`: The most recently interacted with browsing context
+- `focus-existing`: The most recently interacted with browsing context
   in a web app window is chosen to handle the launch. A new `LaunchParams` with
   its `targetURL` set to the launch URL will be enqueued in the document's
   `window.launchQueue`.
 
-`route_to` accepts a list of values, the first valid value will be used. This is
-to allow new values to be added to the spec without breaking backwards
+`client_mode` accepts a list of values, the first valid value will be used. This
+is to allow new values to be added to the spec without breaking backwards
 compatibility with old implementations by using them.\
-For example, if `"matching-url-client"` were added, sites would specify
-`"route_to": ["matching-url-client", "existing-client"]` to continue
+For example, if `"focus-matching-url"` were added, sites would specify
+`"client_mode": ["focus-matching-url", "focus-existing"]` to continue
 to control the behaviour of older browsers that didn't support
 `"matching-url-client"`.
 
@@ -171,15 +171,15 @@ web app windows:
   "name": "Example app",
   "start_url": "/index.html",
   "launch_handler": {
-    "route_to": "existing-client-retain"
+    "client_mode": "focus-existing"
   }
 }
 ```
 
 ## Possible extensions to this proposal
 
-- Add `"service-worker"` as a `route_to` option. This would invoke a [service
-  worker `launch` event][sw-launch-explainer].
+- Add `"service-worker"` as a `client_mode` option. This would invoke a
+  [service worker `launch` event][sw-launch-explainer].
 
   This would allow web apps that open documents in their own app instances but
   want to bring an existing document instance into focus when the same document
@@ -203,7 +203,7 @@ web app windows:
     "name": "Example app",
     "description": "This app will navigate existing clients unless it was launched via the share target API.",
     "launch_handler": {
-      "route_to": "existing-client-navigate"
+      "client_mode": "navigate-existing"
     },
     "share_target": {
       "action": "share.html",
@@ -213,7 +213,7 @@ web app windows:
         "url": "link"
       },
       "launch_handler": {
-        "route_to": "existing-client-retain"
+        "client_mode": "focus-existing"
       }
     }
   }
@@ -275,7 +275,7 @@ proposal with a few changes:
 ### [Tabbed Application Mode](https://github.com/w3c/manifest/issues/737)
 
 This proposal is intended to work in tandem with tabbed mode web app windows.
-The behaviour of `"route_to": "new-client"` with an already open tabbed window
+The behaviour of `"client_mode": "navigate-new"` with an already open tabbed window
 is to open a new tab in that window.
 
 [sw-launch-explainer]: sw_launch_event.md
