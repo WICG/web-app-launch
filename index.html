@@ -102,7 +102,7 @@
         {{LaunchConsumer}} and handle it in script e.g.:
       </p>
       <pre class="example javascript" title="page.js">
-        window.launchQueue.addConsumer((launchParams) => {
+        window.launchQueue.setConsumer((launchParams) => {
           const url = launchParams.targetURL;
           // If the URL is to one of the app sections, updates the app view to
           // that section without interrupting currently playing music.
