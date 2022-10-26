@@ -321,8 +321,9 @@
               {{LaunchParams/targetURL}} set to [=manifest/start_url=].
           </li>
           <li>Set |client| to the result of running the steps to
-              [=prepare a web app launch client=] passing [=manifest/client_mode=]
-              and |params|.{{LaunchParams/targetURL}}.
+              [=prepare a web app launch client=] passing the web app's
+              <a data-cite="appmanifest#dfn-processed-manifest">processed
+              manifest</a> and |params|.{{LaunchParams/targetURL}}.
           </li>
           <li>Append |params| to the [=unconsumed launch params=] of the
               |client|'s document's {{Window/launchQueue}}.
