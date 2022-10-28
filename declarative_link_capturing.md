@@ -12,7 +12,7 @@ Context: https://docs.google.com/document/d/1w9qHqVJmZfO07kbiRMd9lDQMW15DeK5o-p-
 
 ## Overview
 
-[sw-launch](https://github.com/WICG/sw-launch) has been proposed for a number of years and has never made it past a proposal stage, largely due to the complexity involved in both spec and implementation (a complex effort spanning PWAs, service workers, and HTML navigation stack).
+[sw-launch](sw_launch_event.md) has been proposed for a number of years and has never made it past a proposal stage, largely due to the complexity involved in both spec and implementation (a complex effort spanning PWAs, service workers, and HTML navigation stack).
 
 We found that almost all `launch` use cases could be covered by a handful of fixed rules (for example, "choose an existing window in the same app, focus it, and navigate it to the launched URL"). Thus, this proposal, "Declarative Link Capturing", allows sites to choose one of those fixed rules without having to implement custom `launch` event logic, which should satisfy most use cases, and simplify the implementation in the browser and in all the sites. We leave open the option of expanding into the full `launch` event later on.
 
