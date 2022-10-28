@@ -330,6 +330,11 @@
           </li>
           <li>Run the steps to [=process unconsumed launch params=] on the
               |client|'s document's {{Window/launchQueue}}.
+              <p class="note">
+                |client| may be an existing window client with an
+                [=assigned launch consumer=] hence it is necessary to process
+                the newly appended |params|.
+              </p>
           </li>
         </ol>
       </section>
