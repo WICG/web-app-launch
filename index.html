@@ -165,7 +165,7 @@
           <li>If the type of |json|["launch_handler"] is not [=ordered map=],
           return.
           </li>
-          <li>Set |manifest|["launch_handler"] to a new [=ordered map=].
+          <li>Set |manifest|.[=manifest/launch_handler=] to a new [=ordered map=].
           </li>
           <li>[=Process the `client_mode` member=] passing
           |json|["launch_handler"], |manifest|["launch_handler"].
@@ -256,7 +256,7 @@
                   <li>If the type of |entry| is not [=string=], continue.
                   </li>
                   <li>If |entry| is supported by the user agent, set
-                      |manifest_launch_handler|["client_mode"] to |entry| and
+                      |manifest_launch_handler|.[=manifest/client_mode=] to |entry| and
                       return.
                   </li>
                 </ol>
@@ -264,10 +264,12 @@
             </ol>
           </li>
           <li>If |json_launch_handler|["client_mode"] is [=string=] and supported
-              by the user agent, set |manifest_launch_handler|["client_mode"] to
+              by the user agent, set
+              |manifest_launch_handler|.[=manifest/client_mode=] to
               |json_launch_handler|["client_mode"] and return.
           </li>
-          <li>Set |manifest_launch_handler|["client_mode"] to [=client mode/auto=].
+          <li>Set |manifest_launch_handler|.[=manifest/client_mode=] to
+              [=client mode/auto=].
           </li>
         </ol>
         <p class="note">
@@ -359,7 +361,7 @@
         </p>
         <ol class="algorithm">
           <li>Let [=client mode target=] |client_mode| be
-              |manifest|["launch_handler"]["client_mode"].
+              |manifest|.[=manifest/launch_handler=].[=manifest/client_mode=]
           </li>
           <li>If |client_mode| is [=client mode/auto=], set |client_mode| to either
               [=client mode/navigate-new=] or [=client mode/navigate-existing=]
