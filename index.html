@@ -29,7 +29,6 @@
             "infra",
             "mediaqueries",
             "permissions",
-            "service-workers",
             "url",
             "web-platform"
           ]
@@ -344,7 +343,7 @@
         </h2>
         <p>
           A <dfn>web app launch client</dfn> is a
-          [=service worker client/window client=] associated with the web app.
+          [=top-level browsing context=] associated with the web app.
         </p>
         <p class="note">
           The exact form of this association is up to the user agent e.g. a
@@ -381,12 +380,12 @@
                   [=client mode/focus-existing=]</code>
               <dd>
                 <ol class="algorithm">
-                  <li>If there is no [=service worker client/window client=] for
+                  <li>If there is no [=top-level browsing context=] for
                       the web app, return the result of the result of
                       [=prepare a new web app launch client=] passing |manifest|
                       and |target URL|.
                   </li>
-                  <li>Let |client| be a [=service worker client/window client=]
+                  <li>Let |client| be a [=top-level browsing context=]
                       for the web app, the exact selection algorithm is decided
                       by the user agent.
                   </li>
