@@ -85,7 +85,7 @@ If a list of strings is given, the user agent chooses the first supported item i
 
 ### [Service Worker launch event](explainer.md)
 
-This proposal is forwards-compatible with the original [sw-launch](https://github.com/WICG/sw-launch) proposal in WICG. It covers many of the same use cases, but omits the more advanced use cases (specifically, the option to choose which client to focus, and the option to not show any UI). By adding a new “`capture_links`” mode (“`serviceworker`”), the app can explicitly opt in to receiving the “`launch`” event in the service worker, enabling those other use cases, while the majority of uses can be achieved without having to write extra service worker code.
+This proposal is forwards-compatible with the original [sw-launch](sw_launch_event.md) proposal. It covers many of the same use cases, but omits the more advanced use cases (specifically, the option to choose which client to focus, and the option to not show any UI). By adding a new “`capture_links`” mode (“`serviceworker`”), the app can explicitly opt in to receiving the “`launch`” event in the service worker, enabling those other use cases, while the majority of uses can be achieved without having to write extra service worker code.
 
 
 ### [WICG: URL Handlers](https://github.com/WICG/pwa-url-handler/blob/master/explainer.md)
