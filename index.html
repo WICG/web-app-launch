@@ -298,7 +298,7 @@
           resource=] |POST resource| and returns an [=application context=].
         </p>
         <ol class="algorithm">
-          <li>If |params| is null, set |params| to
+          <li>If |params| is not given, set |params| to
               |manifest|.[=manifest/start_url=].
           </li>
           <li>If |params| is a [=URL=], set |params| to a new {{LaunchParams}}
