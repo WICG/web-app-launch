@@ -288,14 +288,16 @@
         <p>
           This specification replaces the existing algorithm to [=launch a web
           application=] to include the behavior of [=manifest/launch_handler=]
-          by replacing it with the steps to [=launch a web app with handling=].
+          by replacing it with the steps to [=launch a web application with
+          handling=].
         </p>
         <p>
-          The steps to <dfn data-export="">launch a web app with handling</dfn>
-          are given by the following algorithm. The algorithm takes a
-          [=Document/processed manifest=] |manifest:processed manifest|, an
-          optional [=URL=] or {{LaunchParams}} |params|, an optional [=POST
-          resource=] |POST resource| and returns an [=application context=].
+          The steps to <dfn data-export="" data-lt="launching a web application with handling">
+          launch a web application with handling</dfn> are given by the
+          following algorithm. The algorithm takes a [=Document/processed
+          manifest=] |manifest:processed manifest|, an optional [=URL=] or
+          {{LaunchParams}} |params|, an optional [=POST resource=] |POST
+          resource| and returns an [=application context=].
         </p>
         <ol class="algorithm">
           <li>If |params| is not given, set |params| to
