@@ -286,17 +286,16 @@
           Launching a Web App with Handling
         </h2>
         <p>
-          This specification amends the existing algorithm to
-          <a data-cite="appmanifest#dfn-launch-a-web-application">launch a web
-          application</a> to include the behavior of [=manifest/launch_handler=]
+          This specification replaces the existing algorithm to [=launch a web
+          application=] to include the behavior of [=manifest/launch_handler=]
           by replacing it with the steps to [=launch a web app with handling=].
         </p>
         <p>
-          The steps to <dfn>launch a web app with handling</dfn> are given by
-          the following algorithm. The algorithm takes a
-          <a data-cite="appmanifest#dfn-processed-manifest">processed manifest</a>
-          |manifest:processed manifest|, an optional [=URL=] or
-          {{LaunchParams}} |params| and an optional <a data-cite="html#post-resource">POST resource</a> |POST resource|.
+          The steps to <dfn data-export="">launch a web app with handling</dfn>
+          are given by the following algorithm. The algorithm takes a
+          [=Document/processed manifest=] |manifest:processed manifest|, an
+          optional [=URL=] or {{LaunchParams}} |params|, an optional [=POST
+          resource=] |POST resource| and returns an [=application context=].
         </p>
         <ol class="algorithm">
           <li>If |params| is null, set |params| to
@@ -305,18 +304,22 @@
           <li>If |params| is a [=URL=], set |params| to a new {{LaunchParams}}
               with {{LaunchParams/targetURL}} set to |params|.
           </li>
-          <li>Set |client| to the result of running the steps to
-              [=prepare a web app launch client=] passing |manifest|, |params|
+          <li>Assert: |params|.{{LaunchParams/targetURL}} is [=manifest/within
+              scope=] of |manifest|.
+          </li>
+          <li>Set |application context| to the result of running the steps to
+              [=prepare an application context=] passing |manifest|, |params|
               and |POST resource|.
           </li>
           <li>Append |params| to the [=unconsumed launch params=] of the
-              |client|'s document's {{Window/launchQueue}}.
+              |application context|'s document's {{Window/launchQueue}}.
           </li>
           <li>Run the steps to [=process unconsumed launch params=] on the
-              |client|'s document's {{Window/launchQueue}}.
+              |application context|'s [=navigable/active document=]'s
+              {{Window/launchQueue}}.
               <p class="note">
-                |client| may be an existing [=web app launch client=] with
-                an [=assigned launch consumer=] hence it is necessary to process
+                |application context| may be an existing instance with an
+                [=assigned launch consumer=] hence it is necessary to process
                 the newly appended {{LaunchParams}}.
               </p>
           </li>
@@ -324,24 +327,14 @@
       </section>
       <section>
         <h2>
-          Preparing a [=Web App Launch Client=]
+          Preparing an [=application context=]
         </h2>
         <p>
-          A <dfn>web app launch client</dfn> is a
-          [=top-level browsing context=] associated with the web app.
-        </p>
-        <p class="note">
-          The exact form of this association is up to the user agent e.g. a
-          dedicated app window separate UI presentation from general hyperlink
-          browsing.
-        </p>
-        <p>
-          To <dfn>prepare a web app launch client</dfn> given a
-          <a data-cite="appmanifest#dfn-processed-manifest"> processed
-          manifest</a> |manifest|, a {{LaunchParams}}
-          |launch params:LaunchParams| and an optional
-          <a data-cite="html#post-resource">POST resource</a> |POST resource|,
-          run the following steps:
+          The steps to <dfn>prepare an application context</dfn> are given by
+          the following algorithm. The algorithm takes a
+          [=Document/processed manifest=] |manifest:processed manifest|, a
+          {{LaunchParams}} |launch params|, an optional [=POST
+          resource=] |POST resource| and returns an [=application context=].
         </p>
         <ol class="algorithm">
           <li>Let [=client mode target=] |client_mode| be
@@ -358,60 +351,40 @@
               <dt>[=client mode/navigate-new=]</code>
               <dd>
                 <ol class="algorithm">
-                  <li>Return the result of running the steps to [=prepare a new
-                      web app launch client=] passing |manifest|,
-                      |launch params| and |POST resource|.
+                  <li>Return the result of running the steps to [=create a new
+                      application context=] passing |manifest|, |launch
+                      params|.{{LaunchParams/targetURL}} and |POST resource|.
                   </li>
                 </ol>
               <dt>[=client mode/navigate-existing=] or
                   [=client mode/focus-existing=]</code>
               <dd>
                 <ol class="algorithm">
-                  <li>If there is no [=top-level browsing context=] for
-                      the web app, return the result of running the steps to
-                      [=prepare a new web app launch client=] passing |manifest|
-                      |target URL|.
+                  <li>If there is no [=application context=] that has |manifest|
+                      [=applied=], return the result of running the steps to
+                      [=create a new application context=] passing |manifest|,
+                      |launch params|.{{LaunchParams/targetURL}} and |POST
+                      resource|.
                   </li>
-                  <li>Let |client| be a [=top-level browsing context=]
-                      for the web app, the exact selection algorithm is decided
-                      by the user agent.
+                  <li>Let |application context| be an [=application context=]
+                      that has |manifest| [=applied=], the user agent selects
+                      the most appropriate one if there are multiple.
+                      <p class="note">
+                        An appropriate selection strategy would be to pick the
+                        one that was most recently in focus.
+                      </p>
+                  </li>
+                  <li>Bring |application context|'s viewport into focus.
                   </li>
                   <li>If |client mode| is [=client mode/navigate-existing=],
-                      run the steps to <a data-cite="html#navigate">navigate</a>
-                      |client| to |launch params|.{{LaunchParams/targetURL}}
-                      passing |POST resource|.
+                      [=navigate=] |application context| to |launch
+                      params|.{{LaunchParams/targetURL}} passing |POST
+                      resource|.
                   </li>
-                  <li>Return |client|.
+                  <li>Return |application context|.
                   </li>
                 </ol>
             </dl>
-          </li>
-        </ol>
-      </section>
-      <section>
-        <h2>
-          Preparing a new [=Web App Launch Client=]
-        </h2>
-        <p>
-          To <dfn>prepare a new web app launch client</dfn> given a
-          <a data-cite="appmanifest#dfn-processed-manifest">processed
-          manifest</a> |manifest:processed manifest|, {{LaunchParams}}
-          |launch params:LaunchParams| and optional
-          <a data-cite="html#post-resource">POST resource</a> |POST resource|,
-          run the following steps:
-        </p>
-        <ol class="algorithm">
-          <li>Let |traversable| be the result of
-              <a data-cite="html#create-a-fresh-top-level-traversable">
-              creating a fresh top-level traversable</a> passing
-              |launch params|.{{LaunchParams/targetURL}} and |POST resource|.
-          </li>
-          <li>Let |browsing context| be the |traversable|'s
-              <a data-cite="html#nav-bc">active browsing context</a>.
-          </li>
-          <li>[=Apply=] |manifest| to |browsing context|.
-          </li>
-          <li>Return |browsing context|.
           </li>
         </ol>
       </section>
