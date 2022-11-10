@@ -358,10 +358,15 @@
               <dd>
                 <ol class="algorithm">
                   <li>If there is no [=application context=] that has |manifest|
-                      [=applied=], return the result of running the steps to
-                      [=create a new application context=] passing |manifest|,
-                      |launch params|.{{LaunchParams/targetURL}} and |POST
-                      resource|.
+                      [=applied=]:
+                    <ol>
+                      <li>
+                        Return the result of running the steps to [=create a new
+                        application context=] passing |manifest|,
+                        |launch params|.{{LaunchParams/targetURL}} and |POST
+                        resource|.
+                      </li>
+                    </ol>
                   </li>
                   <li>Let |application context| be an [=application context=]
                       that has |manifest| [=applied=], the user agent selects
@@ -371,12 +376,23 @@
                         one that was most recently in focus.
                       </p>
                   </li>
-                  <li>Bring |application context|'s viewport into focus.
+                  <li>
+                    If |client mode| is [=client mode/focus-existing=] and
+                    |application context|'s
+                    <a data-cite="html#nav-current-history-entry">current
+                    session history entry</a>'s
+                    <a data-cite="html#she-url">URL</a> is [=manifest/within
+                    scope=] of |manifest|:
+                    <ol>
+                      <li>Bring |application context|'s viewport into focus.
+                      </li>
+                      <li>Return |application context|.
+                      </li>
+                    </ol>
                   </li>
-                  <li>If |client mode| is [=client mode/navigate-existing=],
-                      [=navigate=] |application context| to |launch
-                      params|.{{LaunchParams/targetURL}} passing |POST
-                      resource|.
+                  <li>
+                    [=Navigate=] |application context| to |launch
+                    params|.{{LaunchParams/targetURL}} passing |POST resource|.
                   </li>
                   <li>Return |application context|.
                   </li>
@@ -512,6 +528,33 @@
       </h2>
       <p>
         This specification has no known accessibility considerations.
+      </p>
+    </section>
+    <section id="priv-sec">
+      <h2>
+        Privacy and Security Considerations
+      </h2>
+      <p>
+        Implementations should take care when [=launching a web application with
+        handling=] for launches where [=manifest/client_mode=] is
+        [=client mode/focus-existing=]. These launches MUST NOT leak URLs
+        outside of the [=manifest/navigation scope=]. This applies in both
+        directions given a [=Document/processed manifest=] |manifest|:
+        <ul>
+          <li>
+            Web application launches MUST NOT use a {{LaunchParams/targetURL}}
+            that is not [=manifest/within scope=] of |manifest|.
+          </li>
+          <li>
+            {{LaunchParams}} MUST NOT be enqueued in an [=application
+            context=] with a <a data-cite="html#nav-current-history-entry">
+            current session history entry</a>
+            <a data-cite="html#she-url">URL</a> that is not [=manifest/within
+            scope=] of |manifest|.
+          </li>
+        </ul>
+      </p>
+      <p>
       </p>
     </section>
     <section id="conformance"></section>
