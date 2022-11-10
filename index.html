@@ -391,7 +391,7 @@
                     </ol>
                   </li>
                   <li>
-                    [=navigate=] |application context| to |launch
+                    [=Navigate=] |application context| to |launch
                     params|.{{LaunchParams/targetURL}} passing |POST resource|.
                   </li>
                   <li>Return |application context|.
@@ -536,7 +536,7 @@
       </h2>
       <p>
         Implementations should take care when [=launching a web application with
-        handling=] that launches where [=manifest/client_mode=] is
+        handling=] for launches where [=manifest/client_mode=] is
         [=client mode/focus-existing=]. These launches MUST NOT leak URLs
         outside of the [=manifest/navigation scope=]. This applies in both
         directions given a [=Document/processed manifest=] |manifest|:
@@ -550,7 +550,7 @@
             context=] with a <a data-cite="html#nav-current-history-entry">
             current session history entry</a>
             <a data-cite="html#she-url">URL</a> that is not [=manifest/within
-            scope=] of |manifest|:
+            scope=] of |manifest|.
           </li>
         </ol>
       </p>
