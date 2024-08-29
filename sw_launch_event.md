@@ -1,22 +1,24 @@
 # `launch` Event Explainer
 
-Author: Matt Giuca &lt;<mgiuca@chromium.org>&gt;<br>
-Author: Eric Willigers &lt;<ericwilligers@chromium.org>&gt;<br>
-Author: Jay Harris &lt;<harrisjay@chromium.org>&gt;<br>
-Author: Raymes Khoury &lt;<raymes@chromium.org>&gt;
+Author: Marijn Kruisselbrink &lt;<mek@chromium.org>&gt;<br>
+Former Author: Matt Giuca &lt;<mgiuca@chromium.org>&gt;<br>
+Former Author: Eric Willigers &lt;<ericwilligers@chromium.org>&gt;<br>
+Former Author: Jay Harris &lt;<harrisjay@chromium.org>&gt;<br>
+Former Author: Raymes Khoury &lt;<raymes@chromium.org>&gt;
 
 Created: 2017-09-22
-Updated: 2019-05-27
+Updated: 2024-08-28
 
 ## Introduction and Motivation
 
-Currently web apps have no control over how they will be launched. e.g. they have no control over whether launches will happen in a new window/tab or an existing window/tab that the web app controls. This explainer proposes a new API for Service Workers that allows web applications to control which window/tab they will open in.
+The `launch_handler` manifest field gives web apps limited control over what should happen when a user launches their application. While the currently available options (`navigate-existing`, `navigate-new` and `focus-existing`) address many use cases, there are a few use cases where even more flexibility is desired.
 
-Examples of cases where this can be useful:
-* A chat web app runs in a single window. Users may receive links to specific chat rooms to open in that app. Clicking a link to a chat room should focus the existing window and open the chat room rather than opening a new instance of the chat app.
-* A music player might be playing a track; if the user clicks a link to another track, instead of opening a new tab to the track (possibly playing music over the existing music), it could focus the existing tab, show the new track info but keep playing the old track in the background.
+Both `navigate-existing` and `focus-existing` active the most recently used tab/window of an application, while sometimes an application might want to use a different tab or window to handle the navigation. While this behavior can be
+somewhat emulated with `focus-existing` by having javascript focus or navigate a different existing client, the fact that the "wrong" window gets activated first makes this a less than ideal user experience. In other words, the existing launch handler options handle single-window and arbitrary-many-window apps pretty well, they don't support multiple-but-limited windows.
+
+Examples of such use cases:
 * A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a window, focus that window instead of opening a duplicate.
-* A video player might be playing a video. If the user clicks an external link to a second video, that video could be queued instead of interrupting playback.
+* A chat web app might sometimes be embedded in a different (same origin) app. Some links to specific chat rooms should activate the already open app rather than open a new chat specific window.
 
 In some cases, web apps may not want to open a new window at all, and may be content to show a notification. e.g.
 * A "`magnet:`" URL is handled by a torrent client, which automatically starts downloading the file, showing a notification but not opening a new window or tab.
@@ -42,33 +44,27 @@ self.addEventListener('launch', event => {
 
 ## Background
 
-There are many different ways that web apps can be launched at present. These include:
+The proposed API here is an extension to launch handlers described in https://github.com/WICG/web-app-launch/blob/main/launch_handler.md#background and https://wicg.github.io/web-app-launch/.
+
+This proposal handles the same ways that web apps can be launched as described in there, such as:
+
 1. **Navigations:** A user clicks a link into a Social Media web app.
 2. **OS Shortcuts:** A user opens an Image Editor web app using an OS shortcut (e.g. on their 
    desktop). This shortcut was created when they installed the app.
-3. **Protocol Handlers:** A user clicks on a `mailto:` protocol link which a website has registered to handle using the [`registerProtocolHandler`](https://html.spec.whatwg.org/multipage/system-state.html#dom-navigator-registerprotocolhandler) API.
+3. **Protocol Handlers:** A user clicks on a `mailto:` protocol link which a website has registered to handle using the [`registerProtocolHandler`](https://html.spec.whatwg.org/multipage/system-state.html#dom-navigator-registerprotocolhandler) API or [`"protocol_handlers"` manifest member](https://wicg.github.io/manifest-incubations/index.html#protocol_handlers-member).
 4. **Web Share Target:** A user shares an image with an Image Editor web app that has registered as
    a share target using the [Web Share Target API](https://wicg.github.io/web-share-target/level-2/).
+5. **File Handlers:** A user opens a file that an Image Editor web app has registered to handle using the [`"file_handlers"` manifest member](https://wicg.github.io/manifest-incubations/index.html#file_handlers-member)).
 
-There are also ways to launch web apps which don't exist yet, but which we would like to have in the future:
-1. **File Handlers:** A user opens a file that an Image Editor web app has registered to handle. ([Proposal](https://github.com/WICG/file-handling)).
-2. **Content Type Handlers:** A user navigates to a PDF and it is opened using a PDF viewer web app.
-3. **Deep-link shortcuts API**. A user clicks an OS action to compose a new email with an email client. They are taken to the compose screen of the email client. (Proposed API: [proposal 1](https://gist.github.com/kenchris/0acec2790cd38dfdff0a7197ff00d1de); [proposal 2](https://docs.google.com/a/chromium.org/document/d/1WzpCnpc1N7WjDJnFmj90-Z5SALI3cSPtNrYuH1EVufg/edit)). 
+## `launch_handler` manifest member
 
-## `launch` Event
+This explainer proposes adding a new `"service-worker"` value to the `client_mode` field of the `launch_handler` manifest member. This would invoke a `"launch"` event on a service worker instead of handling a launch as normal. This allows the site to for example redirect the navigation into an existing window or trigger a notification.
 
-This explainer proposes a new API for Service Workers to prevent certain incoming navigations into a web app from completing. The navigation can then be handled with custom logic. This allows sites to catch new windows or tabs being opened in their scope, block the window/tab from opening, and redirect the navigation into an existing window. 
+Since service worker scopes and web app manifest scopes don't necesarilly match, the service worker used for this event would the active worker of whatever registration has the URL being navigated to/launched in scope. If no such service worker can be found (or if the user agent otherwise decides this particular launch should not trigger a `"launch"` event) the next supported option from the provided list of `client_mode`s will be used instead.
 
-Crucially, this only allows *certain* navigations to be intercepted. The user is still in control of the experience, so if they really want to, they can say "Open in new tab" and the app will not be allowed to prevent the page from opening. This is only used to prevent basic navigations, such as left-clicking a link.
+Like with existing `launch_handler` options, this only allows *certain* navigations to be intercepted. The user is still in control of the experience, so if they really want to, they can say "Open in new tab" and the app will not be allowed to prevent the page from opening. This is only used to prevent basic navigations, such as left-clicking a link.
 
 Further, not every navigation to a web app would trigger a `launch` event, only those that indicate it is being launched like an app. Typically, only events external to the app could trigger a `launch` event (e.g. navigations from a website outside of the app's scope into the app, opening a file, sharing a link to the app).
-
-Notice that all the current ways of launching an app described in the [Background](#background) section invoke the app via a navigation:
-1. **OS Shortcuts:** The launch URL in the web app manifest will be navigated to.
-3. **Protocol Handlers:** A URL is registered to be the protocol handler. This will be navigated to and data about the invocation will be passed in URL parameters.
-4. **Web Share Target:** A URL is associated with a share target. This will be navigated to. Share data is passed via GET or POST parameters.
-
-Hence, this proposal would allow web apps to control their launch surface for all of the above types of invocation.
 
 ### Example
 
@@ -80,12 +76,12 @@ self.addEventListener('launch', event => {
     const allClients = await clients.matchAll();
     // If there isn't one available, open a new window.
     if (allClients.length === 0) {
-      const client = await clients.openWindow(event.request.url);
+      const client = await clients.openWindow(event.params.targetURL);
       return;
     }
 
     const client = allClients[0];
-    client.postMessage(event.request.url);
+    client.postMessage(event.params.targetURL);
     client.focus();
   }());
 });
@@ -104,39 +100,26 @@ Notes:
 
 ```ts
 interface LaunchEvent : ExtendableEvent {
-  readonly attribute Request request;
+  readonly attribute LaunchParams params;
 }
 ```
-Notes:
-* The `Request` that led to the navigation is included. In addition to the URL, this allows sites to inspect things like POST data (e.g. for a Web Share Target) that led to the invocation of the app. 
+
 
 ## Design Questions/Details
 
+### Should we expose the full `Request` instead of `LaunchParams` in the `LaunchEvent`
+
+For example for web share target, the data being shared could be part of the "POST" data of the request. By exposing a `Request` instead of (or in addition to) the `LaunchParams` this could be better handled by the service worker. However at the time launch handling runs, the request hasn't been created yet, so we'd have to create a synthetic request to be able to pass it in. Additionally if we do want to expose the POST data, we'd also want to expose that to `focus-existing` launch handlers, and thus would to add it to `LaunchParams` anyway.
+
 ### Restricting launch events to installed websites
 
-It is recommended that user agents only fire launch events for installed web apps. There are 2 reasons for this:
+By only triggering `launch` events when the manifest specifies the `service-worker` `client_mode`, we limit this functionality to installed web apps.
+
+There are 2 reasons for this:
  1. It is difficult to attribute bad behavior to misbehaving websites if they aren't installed (see the section below).
  2. It could be confusing if the behavior of clicking a link changes just because a user has visited a site that registered itself as a `launch` event handler. 
 
 Allowing launch events to be handled on the drive-by web could be explored in the future.
-
-### Handling redirects which trigger launch events
-
-We should allow launch events to be intercepted when a navigation triggers a redirect. For example imagine that https://www.example.com registers a `launch` event handler. The user then clicks a link to https://example.com. No handler is registered, so the navigation is processed. The navigation redirects to https://www.example.com. At this point, before the request is actually made, a launch event should be fired on the SW for https://www.example.com.
-
-If we don't do this, then many link clicks won't be correctly intercepted.
-
-When a `launch` event is captured as the result of a redirect, the behavior of the underlying page needs to be decided. User agents should have freedom to experiment here, but some options are:
-- The tab could be closed. This would be good behavior if a tab was only opened to process the navigation before it could be captured by the app.
-- The tab could return to the page it was on prior to the navigation starting. This seems like sensible behavior in the general case, allowing the user to continue on the site they were on prior to clicking the link handled by the launch event. The user may lose state on the site as a result of a navigation happening, but this wouldn't be unexpected since they've clicked a link.
-
-### Handling `window.open()`
-
-Ideally calls to `window.open()` would also be possible for sites to intercept and handle in a `launch` event handler without the new window opening. One challenge is that it's not sufficient to just examine the URL that's passed into `window.open()` and intercept it as a launch event as it may trigger a redirect as described above.
-
-As a first cut, we propose not doing anything special for `window.open()`. A new window will be opened as usual and a navigation started. That navigation can trigger a launch event.
-
-In future we can consider more advanced techniques to avoid opening a new window and improve the user experience.
 
 ### Requiring a user gesture to trigger launch events
 
@@ -148,8 +131,6 @@ not-a-great-experience.com could register a `launch` handler that just does noth
 
 Similarly, slow-experience.com may unintentionally do a lot of processing in the `launch` event handler before it opens any UI surface. The user could open a file that would be handled by the app and not see anything for a long time. This would also be a poor user experience.
 
-#### Solution 1 (preferred): User agents provide UX to mitigate slow `launch` handlers
-
 User agents can give feedback to users when a site is handling a `launch` event to signify that the app is loading. User agents have a lot of flexibility to experiment here but some suggestions on what could be done if the app doesn't show some UI after a small delay (e.g. 1-2 seconds):
 - Show a splash screen indicating the app is launching
 - Show an entry for the app in the taskbar/dock/shelf indicating it's loading
@@ -159,62 +140,21 @@ If the app doesn't show UI after a long delay (e.g. 10 seconds), the user agent 
 - Kill the `launch` event handler and show an error message indicating the app couldn't launch
 - If apps behave badly on a repetitive basis, don't allow it to handle `launch` events (fallback to opening URLs directly in their default context)
 
-#### Solution 2: `launch` event on Window rather than Service Worker
-
-Another solution to this problem that has been proposed is to handle `launch` events in windows rather than in the Service Worker. If an existing window in the scope of the web app is opened and had registered a `launch` handler, the event would be sent there and the window focused immediately. If no existing window is opened, a new window would automatically be opened, navigated to the target URL and the event would then be sent (after the `onload` event had fired).
-
-This proposal restricts what would be possible with `launch` events, and could also result in a poor user experience:
-- It would not be possible to allow websites to only show a notification from the `launch` event and not display any window
-- If an existing window is open and the app wants to open a new window, a flicker of the existing window will be shown as it is focused prior triggering the event
-- In terms of ergonomics, developers must be careful to register `launch` event handlers on all windows and to co-ordinate between them. Often this will involve going through the service worker anyway.
-
-#### How well will this support behavior of existing native applications?
-
-Below is a collection of how a few common apps handle files being opened. SW Launch refers to the case where we fire a launch event on the service worker, while window launch refers to a theoretical event handler on the client window.
-
-App     | SW Launch   | Window Launch   | Description
-------  | ----------- | --------------- | ---------
-VS Code | Yes         | No              | VSCode opens individual files in the last active window (fine for client launch events), unless a parent directory of the file is open in as a workspace, in which case, the file will be opened in the editor for that workspace. This cannot be handled by client events without undesirable focusing of some arbitrary client.
-Paint   | Yes         | Yes             | Always opens a new window.
-TextEdit| Yes         | No              | Opens files in a new window, if the file isn't already open, otherwise focus the window that has the file open.
-Sublime | Yes         | Yes             | Configurable. Either always open in new window, or never open in new window.
-Chrome  | Yes        | Yes             | Open in last active window.
-
-It seems clear that there are at least some cases where it is useful for applications to be able to inspect already open clients and decide where they want a file to be opened. 
-
 ### Responding with a Client vs. calling Client.focus()
 
-`fetch` events provide a response via a `FetchEvent.respondWith` function. In a similar way, `launch` events could be designed to call a `LaunchEvent.launchWith` function with a `Client` which should be focused.
+`fetch` events provide a response via a `FetchEvent.respondWith` function. In a similar way, `launch` events could be designed to call a `LaunchEvent.launchWith` function with a `Client` which should be focused and/or navigated.
 
-The main benefit to this approach is that it would ensure that developers don't forget to focus a client window. The main issue with this is that it removes the flexibility for doing things besides focusing windows. For example, `launch` events may just want to show a notification.
+The main benefit to this approach is that it would ensure that developers don't forget to focus a client window. The main issue with this is that it removes the flexibility for doing things besides focusing windows. For example, `launch` events may just want to show a notification. We could address this by adding other methods to `LaunchEvent` for triggering notifications and other behavior we would want to support, but that ends up duplication a large amount of API surface. It seems simpler to just stick with explicit `Client` manipulation.
 
 As an aside, the `notificationclick` event has similar challenges to the `launch` event in that handlers can be written such that nothing happens when a notification is clicked. Whatever solution is decided for `launch` event should also apply to `notificationclick` for consistency.
 
-## Details
+### Register Service Workers from the manifest?
 
-Speccing this API will require amendments to the [HTML](https://html.spec.whatwg.org/) spec (**navigate** algorithm) and [Service Workers](https://www.w3.org/TR/service-workers-1) spec (where the `LaunchEvent` would live). Initially, it could exist in its own spec document, which monkey-patches the HTML spec.
+Since launch events would only work if a service worker has been registered by the application, it might be nice to be able to register a service worker with fields in the manifest as well. This explainer does not attempt to define this functionality, although this could be a good follow-up.
 
-This section is a rough draft of "spec-ish" language, without being too picky about getting things "right". See also the [polyfill source code](demos/polyfill.js), which roughly implements this logic.
+### Enqueue a launch in an existing client
 
-### Firing the `launch` event
-
-When the user agent [navigates](https://html.spec.whatwg.org/#navigate) a browsing context *browsingContext* to a URL *resource*, if *resource* is in the scope of an active service worker, the user agent **MAY** go through the `launch` flow instead of the normal navigation behaviour.
-
-(NOTE: I don't understand the details of how new browsing contexts are created when using `window.open` or "Open in new window". I'm just going to assume that the *browsingContext* is null for navigations that open a new window or tab, and figure out the "correct" details later.)
-
-The purpose of this "**MAY**" is to allow the user agent to determine in what situations to allow the target site to interfere with the navigation. It **SHOULD** generally be done when navigating from a resource outside the target service worker scope, but **SHOULD NOT** be done when navigating within the same service worker scope. It **SHOULD NOT** be done when the user has explicitly indicated the intended browsing context for the navigation (e.g., "Open in new tab" or "Open in new window").
-
-If the user agent opts to use the `launch` flow, it should do the following instead of the normal navigation algorithm, within the context of *resource*'s active service worker:
-
-1. Create a new `LaunchEvent` *event* with `type` set to `"launch"`, `url` set to *resource*.
-2. Fire *event* at the service worker global scope. The event listener is **triggered by user activation**.
-3. If *event* is **cancelled**, abort these steps (and do not continue with the navigation).
-4. If *event*'s [[*handlePending*]] slot is null, abort these steps and proceed with the normal navigation algorithm.
-5. Wait until [[*handlePending*]] is fulfilled or rejected.
-6. If [[*handlePending*]] is rejected, proceed with the normal navigation algorithm. (If it is fulfilled, do not continue with the navigation.)
-
-The user agent **MAY** go through the `launch` flow after going through the normal navigation behaviour. For example, the user agent might be displaying a choice asking asking if the user would like to use the `launch` flow for this launch and future launches. The user agent might prefer to immediately display the page being navigated to, instead of waiting for the user to make a choice.
-Thus the choice might be presented as a popup that the user can ignore. If the user requests the `launch` flow, then the event fires and the navigation occurs in the window that is in focus when the event completes. Note that the navigation might involve a POST request, in which case the POST may be handled twice.
+A service worker might want to emulate `focus-existing` launch handler behavior. This would require enqueueing an event into the launch queue of an existing client. This is not something that is currently possible, but we could consider a future extension of the `WindowClient` API that enabled this. For now a service worker would have to `postMessage` to the client, with corresponding code in the client to handle the message from the service worker.
 
 ## Security and privacy considerations
 
@@ -224,3 +164,4 @@ Thus the choice might be presented as a popup that the user can ignore. If the u
 
 * [Service Worker GitHub issue](https://github.com/w3c/ServiceWorker/issues/1028)
 * [mgiuca proposal document](https://docs.google.com/document/d/1jWLpNEFttyLTnxsHs15oT-Hn8I81N0cwUa3JjISoPV8/edit)
+* [Earlier version of this explainer](https://github.com/WICG/web-app-launch/blob/ddc64da204af342ed2a908d96aa1401d025fbd70/sw_launch_event.md)
