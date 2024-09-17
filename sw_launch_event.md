@@ -13,8 +13,8 @@ Updated: 2024-08-28
 
 The `launch_handler` manifest field gives web apps limited control over what should happen when a user launches their application. While the currently available options (`navigate-existing`, `navigate-new` and `focus-existing`) address many use cases, there are a few use cases where even more flexibility is desired.
 
-Both `navigate-existing` and `focus-existing` active the most recently used tab/window of an application, while sometimes an application might want to use a different tab or window to handle the navigation. While this behavior can be
-somewhat emulated with `focus-existing` by having javascript focus or navigate a different existing client, the fact that the "wrong" window gets activated first makes this a less than ideal user experience. In other words, the existing launch handler options handle single-window and arbitrary-many-window apps pretty well, they don't support multiple-but-limited windows.
+Both `navigate-existing` and `focus-existing` activate the most recently used tab/window of an application, while sometimes an application might want to use a different tab or window to handle the navigation. While this behavior can be
+partially emulated with `focus-existing` by having javascript focus or navigate an existing client, the fact that the "wrong" window gets activated first makes this a less than ideal user experience. In other words, the existing launch handler options handle single-window and arbitrary-many-window apps pretty well, they don't support multiple-but-limited windows.
 
 Examples of such use cases:
 * A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a window, focus that window instead of opening a duplicate.
@@ -60,7 +60,7 @@ This proposal handles the same ways that web apps can be launched as described i
 
 This explainer proposes adding a new `"service-worker"` value to the `client_mode` field of the `launch_handler` manifest member. This would invoke a `"launch"` event on a service worker instead of handling a launch as normal. This allows the site to for example redirect the navigation into an existing window or trigger a notification.
 
-Since service worker scopes and web app manifest scopes don't necesarilly match, the service worker used for this event would the active worker of whatever registration has the URL being navigated to/launched in scope. If no such service worker can be found (or if the user agent otherwise decides this particular launch should not trigger a `"launch"` event) the next supported option from the provided list of `client_mode`s will be used instead.
+Since service worker scopes and web app manifest scopes don't necessarily match, the service worker used for this event would be the active worker of whatever registration has the URL being navigated to/launched in scope. If no such service worker can be found (or if the user agent otherwise decides this particular launch should not trigger a `"launch"` event) the next supported option from the provided list of `client_mode`s will be used instead.
 
 Like with existing `launch_handler` options, this only allows *certain* navigations to be intercepted. The user is still in control of the experience, so if they really want to, they can say "Open in new tab" and the app will not be allowed to prevent the page from opening. This is only used to prevent basic navigations, such as left-clicking a link.
 
