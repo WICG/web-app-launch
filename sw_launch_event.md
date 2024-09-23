@@ -53,7 +53,7 @@ This proposal handles the same ways that web apps can be launched as described i
    desktop). This shortcut was created when they installed the app.
 3. **Protocol Handlers:** A user clicks on a `mailto:` protocol link which a website has registered to handle using the [`registerProtocolHandler`](https://html.spec.whatwg.org/multipage/system-state.html#dom-navigator-registerprotocolhandler) API or [`"protocol_handlers"` manifest member](https://wicg.github.io/manifest-incubations/index.html#protocol_handlers-member).
 4. **Web Share Target:** A user shares an image with an Image Editor web app that has registered as
-   a share target using the [Web Share Target API](https://wicg.github.io/web-share-target/level-2/).
+   a share target using the [Web Share Target API](https://wicg.github.io/web-share-target/).
 5. **File Handlers:** A user opens a file that an Image Editor web app has registered to handle using the [`"file_handlers"` manifest member](https://wicg.github.io/manifest-incubations/index.html#file_handlers-member)).
 
 ## `launch_handler` manifest member
