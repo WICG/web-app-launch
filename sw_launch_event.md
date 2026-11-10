@@ -13,12 +13,35 @@ Updated: 2024-08-28
 
 The `launch_handler` manifest field gives web apps limited control over what should happen when a user launches their application. While the currently available options (`navigate-existing`, `navigate-new` and `focus-existing`) address many use cases, there are a few use cases where even more flexibility is desired.
 
-Both `navigate-existing` and `focus-existing` activate the most recently used tab/window of an application, while sometimes an application might want to use a different tab or window to handle the navigation. While this behavior can be
-partially emulated with `focus-existing` by having javascript focus or navigate an existing client, the fact that the "wrong" window gets activated first makes this a less than ideal user experience. In other words, the existing launch handler options handle single-window and arbitrary-many-window apps pretty well, they don't support multiple-but-limited windows.
+Both `navigate-existing` and `focus-existing` activate the most recently used
+tab/window of an application, while sometimes an application might want to use
+a different tab or window to handle the navigation. This behavior can only be
+partially emulated with `focus-existing`: the "wrong" window is activated first,
+and the script that receives the `LaunchParams` has no transient user
+activation, so it can neither `window.focus()` the correct window nor
+`window.open()` a new one without triggering the popup blocker. The best it can
+do is forward the URL to another same-origin window (e.g. via
+`BroadcastChannel`) and leave the user looking at the wrong window. In other
+words, the existing launch handler options handle single-window and
+arbitrary-many-window apps pretty well, they don't support
+multiple-but-limited windows.
 
 Examples of such use cases:
-* A document editor could allow a separate window for each document, but if the user clicks a link to a document that is already open in a window, focus that window instead of opening a duplicate.
-* A chat web app might sometimes be embedded in a different (same origin) app. Some links to specific chat rooms should activate the already open app rather than open a new chat specific window.
+* A document editor could allow a separate window for each document, but if the
+  user clicks a link to a document that is already open in a window, focus that
+  window instead of opening a duplicate.
+* A chat web app might sometimes be embedded in a different (same origin) app.
+  Some links to specific chat rooms should activate the already open app rather
+  than open a new chat specific window.
+* A developer tool or remote-desktop style app keeps one window per connected
+  machine or workspace, with the machine encoded in the URL path
+  (`/box/<machine>/...`). Links from other apps (code review, chat, an IDE)
+  should be handled in the window already connected to that machine, switching
+  content in place and preserving unsent drafts, and should open a new window
+  only when no window for that machine exists. Users of such an app also expect
+  to open a second window on purpose. `focus-existing` prevents duplicate
+  windows for the same machine, but collapses every machine into the most
+  recently used window.
 
 In some cases, web apps may not want to open a new window at all, and may be content to show a notification. e.g.
 * A "`magnet:`" URL is handled by a torrent client, which automatically starts downloading the file, showing a notification but not opening a new window or tab.
