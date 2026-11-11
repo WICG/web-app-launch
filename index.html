@@ -387,6 +387,24 @@
                     <ol>
                       <li>Bring |application context|'s viewport into focus.
                       </li>
+                      <li>Run the <a data-cite="html#activation-notification">
+                          activation notification steps</a> for |application
+                          context|'s [=navigable/active document=].
+                          <p class="note">
+                            A launch is the result of a user action outside the
+                            application, such as activating a link, a shortcut, a
+                            file, or a share. Granting the existing document
+                            [=transient activation=] lets the
+                            [=assigned launch consumer=] call activation-gated
+                            APIs, for example to open a separate window when the
+                            launch belongs to a different document or workspace.
+                            This mirrors how a user's activation of a
+                            {{Notification}} created by a document activates that
+                            document. New application contexts receive activation
+                            through their initial navigation and are not covered
+                            by this step.
+                          </p>
+                      </li>
                       <li>Return |application context|.
                       </li>
                     </ol>
@@ -554,6 +572,15 @@
             scope=] of |manifest|.
           </li>
         </ul>
+        <p>
+          The <a data-cite="html#activation-notification">activation
+          notification steps</a> run when a launch is handled by an existing
+          [=application context=] grant that document [=transient activation=]
+          exactly once per launch. User agents MUST NOT run these steps for a
+          launch that was not initiated by the user, and MUST NOT run them again
+          for the same launch, for example when re-delivering {{LaunchParams}}
+          after a reload.
+        </p>
       </p>
       <p>
       </p>
