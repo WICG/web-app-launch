@@ -11,6 +11,7 @@ Last updated: 2022-03-03
 This repository details a proposal to add a `launch_handler` field to the [web app manifest](https://www.w3.org/TR/appmanifest):
  - [Explainer](launch_handler.md)
  - [Draft spec](https://wicg.github.io/web-app-launch/)
+ - [Pattern-scoped client matching (`launch_handler_patterns.md`)](launch_handler_patterns.md): a `routes` member and `focus-matching` client mode for apps that keep one window per document, workspace, or machine.
 
 
 There are two older proposals archived here:
